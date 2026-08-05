@@ -25,7 +25,13 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from evri.lounge import JsonlLog, PositionTracker, ProbeListener, make_api
+from evri.lounge import (
+    JsonlLog,
+    PositionTracker,
+    ProbeListener,
+    make_api,
+    subscribe_forever,
+)
 
 HERE = Path(__file__).parent
 OUT = HERE / "out"
@@ -195,7 +201,7 @@ async def main() -> int:
         logger.write("connected", device_name=args.name)
         print("Bağlandı. Test başlıyor — ~11 dakika, müdahale gerekmiyor.\n")
 
-        subscription = asyncio.create_task(api.subscribe())
+        subscription = asyncio.create_task(subscribe_forever(api, logger=logger))
         await asyncio.sleep(2)
 
         await Probe(api, logger, tracker).run(args.video)

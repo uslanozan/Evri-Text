@@ -73,11 +73,31 @@ def build_subtitles(
     subs_dir.mkdir(parents=True, exist_ok=True)
 
     key = cache_key(info.video_id, target_lang, provider.id)
+    # --limit is a prompt-iteration tool, not a result. Its truncated output must
+    # never land under the real key, or the next full run gets it back as a HIT.
+    if limit is not None:
+        key = f"{key}.limit{limit}"
+        use_cache = False
     srt_path = subs_dir / f"{key}.srt"
     meta_path = subs_dir / f"{key}.json"
 
-    if use_cache and srt_path.exists() and meta_path.exists():
-        meta = json.loads(meta_path.read_text(encoding="utf-8"))
+    cached_meta = (
+        json.loads(meta_path.read_text(encoding="utf-8"))
+        if srt_path.exists() and meta_path.exists()
+        else None
+    )
+    # A run where chunks fell back to untranslated source text is not a result
+    # worth keeping. Serving it as a HIT hides the failure behind "zero cost".
+    if cached_meta is not None and cached_meta.get("failed_chunks"):
+        log.info(
+            "cache ignored: %s had %d failed chunk(s), retranslating",
+            srt_path.name,
+            len(cached_meta["failed_chunks"]),
+        )
+        cached_meta = None
+
+    if use_cache and cached_meta is not None:
+        meta = cached_meta
         log.info("cache hit: %s", srt_path.name)
         return SubtitleResult(
             video_id=info.video_id,

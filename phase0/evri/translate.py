@@ -9,13 +9,14 @@ from __future__ import annotations
 import json
 import logging
 import re
+import time
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 
 log = logging.getLogger(__name__)
 
-PROMPT_VERSION = "v1"
+PROMPT_VERSION = "v2"
 
 
 @dataclass
@@ -100,7 +101,9 @@ class GeminiTranslationProvider(TranslationProvider):
             "video_title": context.video_title,
             "preceding_context": context.before,
             "following_context": context.after,
-            "items": [{"i": i, "text": s} for i, s in enumerate(sentences)],
+            # Deliberately NOT "text": models mirror the input key name back and
+            # answer with {"i", "text"} instead of {"i", "tr"}.
+            "items": [{"i": i, "source": s} for i, s in enumerate(sentences)],
         }
         config = types.GenerateContentConfig(
             system_instruction=system,
@@ -109,6 +112,8 @@ class GeminiTranslationProvider(TranslationProvider):
         )
 
         last_error: Exception | None = None
+        best: list[str | None] = [None] * len(sentences)
+
         for attempt in range(1, self.max_attempts + 1):
             try:
                 response = self._client.models.generate_content(
@@ -116,20 +121,66 @@ class GeminiTranslationProvider(TranslationProvider):
                     contents=json.dumps(payload, ensure_ascii=False),
                     config=config,
                 )
-                return _parse_indexed_json(response.text, len(sentences))
+                parsed = _parse_indexed_json(response.text, len(sentences))
+                for i, value in enumerate(parsed):
+                    if best[i] is None and value is not None:
+                        best[i] = value
+                if all(value is not None for value in best):
+                    return [value for value in best if value is not None]
+                log.info(
+                    "attempt %d returned %d/%d items, retrying",
+                    attempt,
+                    sum(value is not None for value in best),
+                    len(sentences),
+                )
             except Exception as exc:  # noqa: BLE001 - provider errors vary widely
                 last_error = exc
                 log.warning(
                     "gemini translate attempt %d/%d failed: %s",
                     attempt,
                     self.max_attempts,
-                    exc,
+                    str(exc)[:160],
                 )
 
-        raise RuntimeError(f"translation failed after {self.max_attempts} attempts") from last_error
+            if attempt < self.max_attempts:
+                time.sleep(_retry_delay_s(last_error, attempt))
+
+        translated = sum(value is not None for value in best)
+        if translated == 0:
+            raise RuntimeError(
+                f"translation failed after {self.max_attempts} attempts"
+            ) from last_error
+
+        # Partial success beats discarding sixty good lines over one bad index.
+        log.warning("keeping partial chunk: %d/%d translated", translated, len(sentences))
+        return [
+            value if value is not None else sentences[i] for i, value in enumerate(best)
+        ]
 
 
-def _parse_indexed_json(raw: str | None, expected: int) -> list[str]:
+def _retry_delay_s(error: Exception | None, attempt: int) -> float:
+    """Honour the server's own retryDelay on 429, else back off exponentially.
+
+    The Gemini free tier allows 15 requests/minute; a burst of chunks trips it
+    instantly and the reply carries the exact wait, so use it.
+    """
+    text = str(error) if error else ""
+    if "RESOURCE_EXHAUSTED" in text or "429" in text:
+        match = re.search(r"[Rr]etry in ([\d.]+)s|'retryDelay': '(\d+)s'", text)
+        if match:
+            seconds = float(match.group(1) or match.group(2))
+            return min(seconds + 1.0, 65.0)
+        return 30.0
+    return min(2.0 * attempt, 10.0)
+
+
+def _parse_indexed_json(raw: str | None, expected: int) -> list[str | None]:
+    """Parse the model's reply into ``expected`` slots.
+
+    Slots the model failed to return come back as ``None`` so the caller can fill
+    just those from the source text — dropping one item out of sixty should not
+    cost the whole chunk its translation.
+    """
     if not raw:
         raise ValueError("empty response")
 
@@ -139,7 +190,13 @@ def _parse_indexed_json(raw: str | None, expected: int) -> list[str]:
     if fence:
         text = fence.group(1)
 
-    data = json.loads(text)
+    # raw_decode instead of loads: models sometimes append a second array or a
+    # trailing note after the JSON, which makes loads raise "Extra data" and
+    # throws away a reply that was otherwise complete.
+    data, end = json.JSONDecoder().raw_decode(text)
+    trailing = text[end:].strip()
+    if trailing:
+        log.debug("ignoring %d trailing chars after JSON", len(trailing))
     if isinstance(data, dict):
         for key in ("items", "translations", "result"):
             if key in data:
@@ -155,13 +212,20 @@ def _parse_indexed_json(raw: str | None, expected: int) -> list[str]:
         index = int(entry["i"])
         if not 0 <= index < expected:
             raise ValueError(f"index {index} out of range")
-        out[index] = str(entry.get("tr", ""))
+        # "tr" is what the prompt asks for; the rest are what models actually
+        # produce often enough to be worth accepting rather than failing on.
+        for field_name in ("tr", "translation", "text", "t"):
+            value = entry.get(field_name)
+            if isinstance(value, str) and value.strip():
+                out[index] = value
+                break
+        else:
+            log.debug("item %d has no translation field: %s", index, sorted(entry))
 
-    missing = [i for i, value in enumerate(out) if value is None]
-    if missing:
-        raise ValueError(f"missing translations for indices {missing[:10]}")
+    if all(value is None for value in out):
+        raise ValueError("no usable translations in response")
 
-    return [value for value in out if value is not None]
+    return out
 
 
 def translate_in_parallel(

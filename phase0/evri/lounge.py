@@ -10,6 +10,7 @@ tracker ports across unchanged.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 from pathlib import Path
@@ -40,6 +41,7 @@ __all__ = [
     "ProbeListener",
     "event_to_dict",
     "make_api",
+    "subscribe_forever",
 ]
 
 log = logging.getLogger(__name__)
@@ -136,6 +138,33 @@ class ProbeListener(EventListener):
         self.log.write("disconnected", event=event_to_dict(event))
 
 
+def _serialise_auth(api: YtLoungeApi) -> dict:
+    """Auth state in the shape ``load_auth_state`` actually accepts.
+
+    pyytlounge 3.3.0's ``store_auth_state()`` emits the pre-versioning key names
+    (``lounge_id_token``, no ``version``) while ``AuthState.deserialize`` reads the
+    versioned ones (``loungeIdToken``, ``version``, ``expiry``) and raises
+    KeyError: 'version' on its own output. Go through AuthState.serialize instead.
+    """
+    auth = getattr(api, "auth", None)
+    if auth is not None and hasattr(auth, "serialize"):
+        return dict(auth.serialize())
+    return api.store_auth_state()
+
+
+def _normalise_auth(data: dict) -> dict:
+    """Accept either key style, hand back the versioned one."""
+    if "version" in data and "loungeIdToken" in data:
+        return data
+    return {
+        "version": 0,
+        "screenId": data.get("screenId") or data.get("screen_id"),
+        "loungeIdToken": data.get("loungeIdToken") or data.get("lounge_id_token"),
+        "refreshToken": data.get("refreshToken") or data.get("refresh_token"),
+        "expiry": data.get("expiry"),
+    }
+
+
 async def make_api(
     listener: EventListener,
     *,
@@ -149,9 +178,12 @@ async def make_api(
     ever — which is the whole point of doing this in one trip to the TV.
     """
     api = YtLoungeApi(device_name, listener)
+    # pyytlounge >= 3.3 builds its aiohttp session in __aenter__ and raises
+    # "API is not initialized" without it. Callers own the lifetime and close it.
+    await api.__aenter__()
 
     if auth_file.exists() and not pairing_code:
-        api.load_auth_state(json.loads(auth_file.read_text(encoding="utf-8")))
+        api.load_auth_state(_normalise_auth(json.loads(auth_file.read_text(encoding="utf-8"))))
         log.info("loaded saved pairing from %s", auth_file)
         if not await api.refresh_auth():
             raise RuntimeError(
@@ -165,7 +197,7 @@ async def make_api(
             raise RuntimeError(f"pairing failed for code {code!r}")
         auth_file.parent.mkdir(parents=True, exist_ok=True)
         auth_file.write_text(
-            json.dumps(api.store_auth_state(), ensure_ascii=False, indent=2),
+            json.dumps(_serialise_auth(api), ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
         log.info("paired and saved to %s", auth_file)
@@ -174,3 +206,48 @@ async def make_api(
         raise RuntimeError("connect() failed — is the TV awake with YouTube open?")
 
     return api
+
+
+async def subscribe_forever(
+    api: YtLoungeApi,
+    *,
+    logger: JsonlLog | None = None,
+    backoff_s: float = 1.0,
+    max_backoff_s: float = 15.0,
+) -> None:
+    """Keep the event stream alive for as long as the caller keeps this task.
+
+    ``pyytlounge.subscribe()`` is a single long-poll over Google's bind channel.
+    The server closes that stream every few minutes, at which point subscribe()
+    simply returns, ``connected()`` flips to False and every later command raises
+    NotConnectedException. Phase 0 hit exactly this ~4 minutes into stage H.
+
+    So: re-subscribe forever, re-running ``connect()`` when the session itself is
+    gone. Phase 1's Kotlin port needs the same loop — the reconnect is part of the
+    protocol, not an optional nicety.
+    """
+    delay = backoff_s
+    while True:
+        try:
+            if not api.connected():
+                if logger is not None:
+                    logger.write("resubscribe", action="connect")
+                if not await api.connect():
+                    raise RuntimeError("reconnect failed")
+            if logger is not None:
+                logger.write("resubscribe", action="subscribe")
+            await api.subscribe()
+            # Clean end of a long-poll: the normal case, reconnect immediately.
+            delay = backoff_s
+            if logger is not None:
+                logger.write("resubscribe", action="stream_ended")
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            if logger is not None:
+                logger.write(
+                    "resubscribe", action="error", error=str(exc), type=type(exc).__name__
+                )
+            log.warning("subscribe loop error: %s", exc)
+            await asyncio.sleep(delay)
+            delay = min(delay * 2, max_backoff_s)

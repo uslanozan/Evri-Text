@@ -22,7 +22,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from evri import captions as captions_mod
-from evri.pipeline import build_subtitles
+from evri.pipeline import build_subtitles, cache_key
 from evri.translate import GeminiTranslationProvider
 
 OUT = Path(__file__).parent / "out"
@@ -96,7 +96,9 @@ def main() -> int:
     parser.add_argument("--model", default=os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite"))
     parser.add_argument("--limit", type=int, help="Sadece ilk N cümle (ucuz test)")
     parser.add_argument("--chunk-size", type=int, default=60, help="Cümle / chunk")
-    parser.add_argument("--workers", type=int, default=8, help="Paralel chunk sayısı")
+    # 3, not 8: the Gemini free tier caps at 15 requests/minute and a wider fan-out
+    # spends the whole budget on 429s and retries. Raise it on a paid key.
+    parser.add_argument("--workers", type=int, default=3, help="Paralel chunk sayısı")
     parser.add_argument("--no-cache", action="store_true")
     parser.add_argument("--force", action="store_true",
                         help="Türkçe altyazısı olsa bile yine üret")
@@ -147,8 +149,8 @@ def main() -> int:
     if result.failed_chunks:
         print(f"  ! {len(result.failed_chunks)} chunk çevrilemedi, kaynak metin bırakıldı")
 
-    key = f"{result.video_id}.{args.target}.{provider.id}"
-    print(f"\n  SRT: out/subs/{key}.v1.srt")
+    key = cache_key(result.video_id, args.target, provider.id)
+    print(f"\n  SRT: out/subs/{key}.srt")
     print("\nÖnce sen bak, sonra anneye göster:")
     print(f'  1. VLC ile videoyu aç, Altyazı > Altyazı dosyası ekle -> yukarıdaki .srt')
     print(f"  2. Rastgele 3-4 yerden kontrol et: cümleler tam mı, Türkçe doğal mı?")

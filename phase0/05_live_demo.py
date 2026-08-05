@@ -24,7 +24,13 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from evri.cues import cue_at
-from evri.lounge import JsonlLog, PositionTracker, ProbeListener, make_api
+from evri.lounge import (
+    JsonlLog,
+    PositionTracker,
+    ProbeListener,
+    make_api,
+    subscribe_forever,
+)
 from evri.overlay import TvOverlay
 from evri.pipeline import build_subtitles
 from evri.translate import GeminiTranslationProvider
@@ -181,7 +187,7 @@ async def main() -> int:
         api = await make_api(
             listener, auth_file=AUTH_FILE, pairing_code=args.pair, device_name="Evri-Text"
         )
-        subscription = asyncio.create_task(api.subscribe())
+        subscription = asyncio.create_task(subscribe_forever(api, logger=logger))
         await asyncio.sleep(1)
         await api.get_now_playing()
 

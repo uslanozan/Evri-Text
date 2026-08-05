@@ -219,7 +219,15 @@ def main() -> int:
             doze = adb.whitelist_doze(TVOVERLAY_PACKAGE)
             report.check("deviceidle whitelist", doze.ok, doze.text[:80])
 
-            adb.shell(f"monkey -p {TVOVERLAY_PACKAGE} -c android.intent.category.LAUNCHER 1")
+            # TvOverlay only declares a LEANBACK_LAUNCHER activity, so `monkey -c
+            # android.intent.category.LAUNCHER` finds nothing and the HTTP server
+            # never starts. Start the activity directly, fall back to monkey.
+            launch = adb.shell(f"am start -n {TVOVERLAY_PACKAGE}/.SetupActivity")
+            if not launch.ok or "Error" in launch.text:
+                adb.shell(
+                    f"monkey -p {TVOVERLAY_PACKAGE} "
+                    "-c android.intent.category.LEANBACK_LAUNCHER 1"
+                )
             time.sleep(4)
 
             host = args.ip or device_ip
