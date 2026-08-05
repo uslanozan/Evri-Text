@@ -16,7 +16,11 @@ from dataclasses import dataclass, field
 
 log = logging.getLogger(__name__)
 
-PROMPT_VERSION = "v2"
+PROMPT_VERSION = "v4"
+
+# The model marks a speaker change with this instead of a newline, because a raw
+# newline inside a JSON string makes the whole reply unparseable.
+TURN_MARKER = " || "
 
 
 @dataclass
@@ -57,7 +61,16 @@ Rules:
 - Keep proper nouns, brand names and established technical terms in their
   original form whenever that is what a native {target} speaker would actually
   say.
-- Keep each translation short enough to read comfortably as a TV subtitle.
+- Keep each translation short enough to read comfortably as a TV subtitle:
+  aim for at most two lines' worth of text, roughly 80 characters. Tighten the
+  wording rather than dropping meaning.
+- ASR gives no speaker labels. When one item clearly contains more than one
+  speaker's turn, mark it the way subtitles do: start each turn with "- " and
+  separate the turns with the exact marker " || ". Example value:
+  "- Merhaba. || - Merhaba, nasılsın?"
+  Use " || " and never a real line break — a raw newline inside a JSON string
+  breaks the reply. Only do this on a real speaker change. Never add a dash to a
+  single speaker's line, and never invent character names.
 - Return EXACTLY one translation per input item, in the same order, preserving
   each item's "i" index. Never merge, split, add or drop items.
 - Reply with nothing but a JSON array of {{"i": <int>, "tr": "<translation>"}}.
@@ -174,6 +187,45 @@ def _retry_delay_s(error: Exception | None, attempt: int) -> float:
     return min(2.0 * attempt, 10.0)
 
 
+def _escape_newlines_in_strings(text: str) -> str:
+    """Escape raw newlines that appear inside JSON string literals.
+
+    Asking for dialogue dashes tempts the model into a real line break inside a
+    value, which is invalid JSON and costs the whole chunk. Repair it instead of
+    failing: walk the text tracking whether we are inside a string.
+    """
+    out: list[str] = []
+    in_string = False
+    escaped = False
+    for char in text:
+        if escaped:
+            out.append(char)
+            escaped = False
+            continue
+        if char == "\\":
+            out.append(char)
+            escaped = True
+            continue
+        if char == '"':
+            in_string = not in_string
+            out.append(char)
+            continue
+        if in_string and char in "\r\n":
+            out.append("\\n")
+            continue
+        out.append(char)
+    return "".join(out)
+
+
+def _apply_turn_marker(value: str) -> str:
+    """Turn the speaker-change marker into the line break SRT/VTT expect."""
+    text = value.replace("\r\n", "\n").strip()
+    if TURN_MARKER.strip() in text:
+        parts = [part.strip() for part in text.split(TURN_MARKER.strip())]
+        text = "\n".join(part for part in parts if part)
+    return text
+
+
 def _parse_indexed_json(raw: str | None, expected: int) -> list[str | None]:
     """Parse the model's reply into ``expected`` slots.
 
@@ -189,6 +241,8 @@ def _parse_indexed_json(raw: str | None, expected: int) -> list[str | None]:
     fence = re.match(r"^```(?:json)?\s*(.*?)\s*```$", text, re.DOTALL)
     if fence:
         text = fence.group(1)
+
+    text = _escape_newlines_in_strings(text)
 
     # raw_decode instead of loads: models sometimes append a second array or a
     # trailing note after the JSON, which makes loads raise "Extra data" and
@@ -217,7 +271,7 @@ def _parse_indexed_json(raw: str | None, expected: int) -> list[str | None]:
         for field_name in ("tr", "translation", "text", "t"):
             value = entry.get(field_name)
             if isinstance(value, str) and value.strip():
-                out[index] = value
+                out[index] = _apply_turn_marker(value)
                 break
         else:
             log.debug("item %d has no translation field: %s", index, sorted(entry))

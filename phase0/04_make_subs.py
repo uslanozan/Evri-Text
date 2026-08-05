@@ -93,9 +93,13 @@ def main() -> int:
     parser.add_argument("--survey", help="Her satırda bir link olan dosya")
     parser.add_argument("--target", default=os.getenv("TARGET_LANG", "tr"))
     parser.add_argument("--source", default=None, help="Varsayılan: otomatik")
-    parser.add_argument("--model", default=os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite"))
+    parser.add_argument("--model", default=os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite"))
     parser.add_argument("--limit", type=int, help="Sadece ilk N cümle (ucuz test)")
-    parser.add_argument("--chunk-size", type=int, default=60, help="Cümle / chunk")
+    # Smaller chunks keep the model consistent about speaker-turn dashes; larger
+    # ones cost fewer requests. 30 is the compromise Phase 0 settled on.
+    parser.add_argument(
+        "--chunk-size", type=int, default=int(os.getenv("CHUNK_SIZE", "30")), help="Cümle / chunk"
+    )
     # 3, not 8: the Gemini free tier caps at 15 requests/minute and a wider fan-out
     # spends the whole budget on 429s and retries. Raise it on a paid key.
     parser.add_argument("--workers", type=int, default=3, help="Paralel chunk sayısı")

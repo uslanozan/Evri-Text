@@ -146,9 +146,10 @@ async def main() -> int:
     parser.add_argument("--pair", help="TV eşleştirme kodu (sadece ilk kez)")
     parser.add_argument("--ip", default=os.getenv("TV_IP", ""), help="Mi Box S IP")
     parser.add_argument("--target", default=os.getenv("TARGET_LANG", "tr"))
-    parser.add_argument("--model", default=os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite"))
-    parser.add_argument("--chunk-size", type=int, default=60)
-    parser.add_argument("--workers", type=int, default=8)
+    parser.add_argument("--model", default=os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite"))
+    parser.add_argument("--chunk-size", type=int, default=int(os.getenv("CHUNK_SIZE", "30")))
+    # 3, not 8: the Gemini free tier caps at 15 requests/minute.
+    parser.add_argument("--workers", type=int, default=3)
     parser.add_argument("--force", action="store_true")
     parser.add_argument(
         "--reanchor", type=float, default=15.0,

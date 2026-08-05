@@ -8,8 +8,8 @@ Son güncelleme: 2026-08-05, laptop + Xiaomi MiTV-AFKR0 (Android 11, API 30) üz
 |---|---|---|---|
 | **R4** | Overlay tam ekran YouTube'un üstünde görünüyor mu? | ✅ **YEŞİL** | Köşe bildirimi ve sabit altyazı, tam ekran video üzerinde göründü |
 | **R1** | Lounge API pozisyonu altyazı senkronu için yeterince hassas mı? | ✅ **YEŞİL** | p95 kayma **234 ms**, medyan 49 ms, kayma hızı 2.8 ms/sn |
-| **R7** | ASR altyazısının LLM çevirisi anlaşılır mı? | 🟡 **kısmen** | 803 satır üretildi, kalitesi iyi görünüyor — **anne testi yapılmadı** |
-| — | Videoların kaçında altyazı var? | ⬜ | Adım 6 çalıştırılmadı |
+| **R7** | ASR altyazısının LLM çevirisi anlaşılır mı? | 🟡 **kısmen** | VLC'de kontrol edildi, takip edilebilir — **anne testi yapılmadı** |
+| — | Videoların kaçında altyazı var? | ✅ **10/10** | 2 elle yazılmış EN, 8 ASR, **0 video STT gerektiriyor** |
 | — | Uçtan uca çalışıyor mu? | ⬜ | Adım 7 çalıştırılmadı |
 
 **Projeyi bloke eden iki riskin ikisi de geçti.**
@@ -31,14 +31,20 @@ Beğenmezsen prompt `evri/translate.py` içindeki `SYSTEM_INSTRUCTION`'da.
 Hızlı deneme: `python 04_make_subs.py --url "..." --limit 20`
 (`--limit` artık ayrı dosyaya yazıyor, tam çıktıyı bozmuyor.)
 
-### 2. Adım 6 — altyazı var mı taraması *(API key gerekmez, bedava)*
+### 2. Adım 6 — altyazı var mı taraması ✅ *bitti*
 
-- [ ] `phase0/videos.txt` oluştur, annenin izlediği tipten **20-30 link** koy (her satırda bir tane, `#` yorum)
-- [ ] `python 04_make_subs.py --survey videos.txt`
+10 video tarandı (podcast, kısa film, belgesel tarzı):
 
-Bu, Phase 2'deki STT işinin ne kadar acil olduğunu belirliyor:
-- Videoların çoğunda İngilizce altyazı varsa → STT ertelenebilir
-- Büyük kısmında yoksa → sesi kendimiz yazıya dökmek zorundayız, bu çok daha zor bir iş
+| Sonuç | Sayı | Ne demek |
+|---|---|---|
+| Elle yazılmış Türkçe | 0 | — |
+| Elle yazılmış İngilizce | 2 (%20) | Çeviri yolu, **en iyi kaynak kalitesi** |
+| Sadece otomatik (ASR) | 8 (%80) | Çeviri yolu |
+| Hiç altyazı yok | **0** | STT gerekmiyor |
+
+**Sonuç: STT yolu acil değil. Phase 1 tamamen çeviri yoluyla yapılabilir.**
+Örneklem küçük (10 video) — gerçek kullanımda altyazısız videoyla karşılaşırsan
+Phase 2 tekrar gündeme gelir.
 
 ### 3. Adım 7 — uçtan uca canlı test
 

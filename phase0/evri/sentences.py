@@ -30,8 +30,11 @@ def merge_into_sentences(
     cues: list[Cue],
     *,
     max_gap_ms: int = 1200,
-    max_duration_ms: int = 8000,
-    max_chars: int = 200,
+    max_duration_ms: int = 6000,
+    # ASR input often has no punctuation at all, so this cap — not the full stop —
+    # is what actually ends most groups. At 200 a Turkish line renders as 3-4 rows
+    # of subtitle; 120 keeps it to the two rows a TV viewer can read in time.
+    max_chars: int = 120,
 ) -> list[Sentence]:
     """Group cues into sentence-ish units.
 
