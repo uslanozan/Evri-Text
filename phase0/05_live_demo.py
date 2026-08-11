@@ -54,6 +54,7 @@ class LiveSubtitles:
         self.current_video: str | None = None
         self.shown_text: str | None = None
         self.building = False
+        self._drawing = False
 
     async def on_video(self, video_id: str) -> None:
         """New video started — build subtitles for it without blocking the loop."""
@@ -106,10 +107,29 @@ class LiveSubtitles:
             seconds=4,
         )
 
+    async def _draw(self, text: str | None) -> None:
+        """Push one overlay update without blocking the event loop.
+
+        TvOverlay's HTTP calls are synchronous and the TV stalls them for seconds
+        at a time under load. Called inline, one stall freezes position tracking
+        and the Lounge subscription too, so a hiccup snowballs. Off-thread, and
+        never more than one in flight.
+        """
+        if self._drawing:
+            return
+        self._drawing = True
+        try:
+            if text:
+                await asyncio.to_thread(self.overlay.show_fixed, text)
+            else:
+                await asyncio.to_thread(self.overlay.hide_fixed)
+            self.shown_text = text
+        finally:
+            self._drawing = False
+
     async def clear(self) -> None:
         if self.shown_text is not None:
-            self.overlay.hide_fixed()
-            self.shown_text = None
+            await self._draw(None)
 
     async def tick(self) -> None:
         if not self.cues:
@@ -131,11 +151,7 @@ class LiveSubtitles:
         text = cue.text if cue else None
 
         if text != self.shown_text:
-            if text:
-                self.overlay.show_fixed(text)
-            else:
-                self.overlay.hide_fixed()
-            self.shown_text = text
+            await self._draw(text)
 
 
 async def main() -> int:
@@ -151,6 +167,12 @@ async def main() -> int:
     # 3, not 8: the Gemini free tier caps at 15 requests/minute.
     parser.add_argument("--workers", type=int, default=3)
     parser.add_argument("--force", action="store_true")
+    parser.add_argument(
+        "--corner",
+        default="bottom_start",
+        choices=["bottom_start", "bottom_end", "top_start", "top_end"],
+        help="TvOverlay altyazı köşesi (alt-orta desteklenmiyor)",
+    )
     parser.add_argument(
         "--reanchor", type=float, default=15.0,
         help="Kaç saniyede bir getNowPlaying ile pozisyonu tazele (0 = kapalı)",
@@ -174,6 +196,7 @@ async def main() -> int:
         print(f"TvOverlay http://{args.ip}:5001 adresinde cevap vermiyor.")
         print("01_preflight.py --install-tvoverlay ile kur ve TV'de bir kez aç.")
         return 2
+    overlay.configure_for_subtitles(corner=args.corner)
 
     logger = JsonlLog(OUT / f"live-{time.strftime('%Y%m%d-%H%M%S')}.jsonl")
     tracker = PositionTracker()

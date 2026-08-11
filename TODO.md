@@ -5,12 +5,13 @@ Madde madde, tek satır. Ayrıntı gerekirse `DESIGN.md` veya `phase0/DURUM.md`.
 
 ## Phase 0 — kalan
 
-- [ ] **Anneye göster, takip edebiliyor mu diye sor** — projenin tek gerçek kabul kriteri
-- [ ] Adım 7: `python 05_live_demo.py` — TV'de uçtan uca canlı test (önce TvOverlay'i aç)
+- [x] **Anneye gösterildi — okuyabiliyor.** R7 yeşil
+- [x] Adım 7: canlı test geçti — senkron, sarma, duraklat/devam, video değişimi çalışıyor
+- [x] **Phase 0 kapandı**
 - [x] VLC'de çeviri kontrolü — takip edilebilir, kelime hataları tolere edilebilir seviyede
 - [x] `phase0/videos.txt` — 10 link (podcast, kısa film, belgesel tarzı)
 - [x] Adım 6: 10/10 videoda altyazı var (2 elle yazılmış EN, 8 ASR), **0 video STT gerektiriyor**
-- [ ] Kota yarın sıfırlanınca `gemini-3.6-flash` ile tam çeviriyi tekrar üret ve flash-lite ile karşılaştır
+- [x] Model kararı: canlı yolda `3.5-flash-lite` (30 cümlelik chunk 3.0s vs 3.6-flash 15.2s), kalite gerekirse `--model gemini-3.6-flash`
 - [x] R4 — overlay tam ekran YouTube üstünde görünüyor
 - [x] R1 — senkron ölçümü: p95 kayma 234 ms, YEŞİL
 - [x] Çeviri hattı uçtan uca çalışıyor: 826 cue, 0 başarısız chunk
@@ -36,11 +37,18 @@ Madde madde, tek satır. Ayrıntı gerekirse `DESIGN.md` veya `phase0/DURUM.md`.
 - [ ] Kendi overlay'imiz: `SYSTEM_ALERT_WINDOW`, TvOverlay'in yerine geçecek
 - [ ] Overlay izni akışı: kullanıcıyı `MANAGE_OVERLAY_PERMISSION` ekranına yönlendir
 - [ ] Altyazı görünümü: yazı boyutu, kontrast, arka plan, konum — anne okuyabilsin diye ayarlanabilir
+- [ ] **Kademeli çeviri:** ilk chunk biter bitmez altyazıyı göster, tüm videoyu bekleme — Phase 0'da ilk altyazı 89 sn sonra geldi
+- [ ] Altyazı çizimi ana thread'den ayrı olmalı — Phase 0'da senkron HTTP çağrısı event loop'u dondurdu, gecikme kartopu oldu
+- [ ] "Altyazı hazırlanıyor" göstergesi: kullanıcı bekleme sırasında ne olduğunu görsün
 - [ ] Caption çekme: yt-dlp yerine NewPipeExtractor — `evri/captions.py` referans
 - [ ] VTT parse + ASR temizliği portu — `evri/cues.py`
 - [ ] Cümle birleştirme portu — `evri/sentences.py`
 - [ ] Çeviri hattı portu — `evri/pipeline.py`
 - [ ] Cihaz üstü önbellek: `videoId + dil + provider + promptSürümü` anahtarı, Phase 0 ile aynı şema
+- [ ] Önbellek saklama politikası: boyut tavanı (~100 MB) + LRU tahliye — 98 dk film 72 KB, yani ~1400 film sığar
+- [ ] Prompt sürümü değişince eski anahtarları temizle (Phase 0'da elle siliyoruz)
+- [ ] Önbellek anahtarına model adını ekle — şu an model değişince eski çıktı HIT dönüyor
+- [ ] Ayarlarda "önbelleği temizle" düğmesi + kullanılan alanı göster
 - [ ] Eşleştirme akışı: TV kodunu uygulama içinden girme, auth state'i kalıcı sakla
 - [ ] Ayarlar ekranı: offset, yeniden çapa aralığı, hedef dil, model seçimi
 - [ ] Servis olarak arka planda çalışma + boot'ta otomatik başlama

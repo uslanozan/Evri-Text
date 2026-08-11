@@ -8,11 +8,11 @@ Son güncelleme: 2026-08-05, laptop + Xiaomi MiTV-AFKR0 (Android 11, API 30) üz
 |---|---|---|---|
 | **R4** | Overlay tam ekran YouTube'un üstünde görünüyor mu? | ✅ **YEŞİL** | Köşe bildirimi ve sabit altyazı, tam ekran video üzerinde göründü |
 | **R1** | Lounge API pozisyonu altyazı senkronu için yeterince hassas mı? | ✅ **YEŞİL** | p95 kayma **234 ms**, medyan 49 ms, kayma hızı 2.8 ms/sn |
-| **R7** | ASR altyazısının LLM çevirisi anlaşılır mı? | 🟡 **kısmen** | VLC'de kontrol edildi, takip edilebilir — **anne testi yapılmadı** |
+| **R7** | ASR altyazısının LLM çevirisi anlaşılır mı? | ✅ **YEŞİL** | VLC'de kontrol edildi; **anneye gösterildi, okuyabiliyor** |
 | — | Videoların kaçında altyazı var? | ✅ **10/10** | 2 elle yazılmış EN, 8 ASR, **0 video STT gerektiriyor** |
-| — | Uçtan uca çalışıyor mu? | ⬜ | Adım 7 çalıştırılmadı |
+| — | Uçtan uca çalışıyor mu? | ✅ **EVET** | Canlı test geçti: senkron, sarma, duraklat/devam, video değişimi |
 
-**Projeyi bloke eden iki riskin ikisi de geçti.**
+**Phase 0 kapandı. Bütün riskler yeşil, uçtan uca prototip TV'de çalışıyor.**
 
 ---
 
@@ -46,19 +46,22 @@ Hızlı deneme: `python 04_make_subs.py --url "..." --limit 20`
 Örneklem küçük (10 video) — gerçek kullanımda altyazısız videoyla karşılaşırsan
 Phase 2 tekrar gündeme gelir.
 
-### 3. Adım 7 — uçtan uca canlı test
+### 3. Adım 7 — uçtan uca canlı test ✅ *geçti*
 
-Ön koşullar:
-- TV açık, uyanık, YouTube ekranda
-- TvOverlay çalışıyor olmalı (Phase 0 sonunda `force-stop` ile durduruldu):
-  ```powershell
-  adb shell am start -n com.tabdeveloper.tvoverlay/.SetupActivity
-  ```
-- [ ] `python 05_live_demo.py`
-- [ ] Kumandayla normal video aç/kapat/sar — altyazı takip ediyor mu?
-- Kayma varsa: `--offset 0.4` (altyazıyı ileri al) veya `--reanchor 5` (daha sık çapa)
+`python 05_live_demo.py`, TV'de kumandayla normal kullanım:
 
-**Bu adım çalışıyorsa Phase 1 sadece "aynı mantığı cihaza taşımak" demek.**
+| Test | Sonuç |
+|---|---|
+| Senkron | Genel olarak tutuyor; yer yer hafif geriden geliyor — kaynak altyazının kendi zamanlamasından |
+| Sarma | İyi, doğru yerden devam ediyor |
+| Duraklat / devam | Çalışıyor |
+| Video değişimi | Çalışıyor, yeni video için ~10 sn bekleme (önbellekte yoksa çeviri süresi) |
+
+**Phase 1 artık "aynı mantığı cihaza taşımak" demek.**
+
+Bu koşuda çıkan iki iyileştirme (ikisi de `TODO.md`'de):
+- İlk altyazı gecikmesi: tüm video çevrilene kadar bekleniyor. Kademeli çeviri şart.
+- Overlay çizimi ana döngüyü bloke ediyordu — `asyncio.to_thread`'e alındı, Phase 1'de de ayrı thread'de olmalı.
 
 ---
 
