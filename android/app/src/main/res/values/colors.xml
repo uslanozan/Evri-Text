@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark-only palette. A TV app is watched in a dim room next to a bright
+         video; a light theme would be hostile. -->
+    <color name="surface">#0F1216</color>
+    <color name="surface_container">#171B21</color>
+    <color name="surface_container_high">#1F242B</color>
+    <color name="outline">#3A424C</color>
+
+    <color name="on_surface">#E6EAF0</color>
+    <color name="on_surface_variant">#A8B2BF</color>
+
+    <color name="primary">#7CC4FF</color>
+    <color name="on_primary">#00344F</color>
+
+    <color name="success">#79D68A</color>
+    <color name="warning">#FFC46B</color>
+    <color name="error">#FF9A8F</color>
+
+    <color name="subtitle_background">#CC000000</color>
+    <color name="subtitle_text">#FFFFFFFF</color>
+</resources>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.EvriText" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorOnPrimary">@color/on_primary</item>
+        <item name="android:colorBackground">@color/surface</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorSurfaceContainer">@color/surface_container</item>
+        <item name="colorSurfaceContainerHigh">@color/surface_container_high</item>
+        <item name="colorOnSurface">@color/on_surface</item>
+        <item name="colorOnSurfaceVariant">@color/on_surface_variant</item>
+        <item name="colorOutline">@color/outline</item>
+        <item name="colorError">@color/error</item>
+
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowBackground">@color/surface</item>
+    </style>
+
+    <!-- One row of the settings list. Focus is the only affordance a TV has:
+         the D-pad moves a highlight, there is no cursor and no touch. So the
+         focused state has to be unmistakable — hence a filled background plus a
+         visible outline, not a subtle tint. -->
+    <style name="Widget.EvriText.Row" parent="">
+        <item name="android:background">@drawable/row_background</item>
+        <item name="android:focusable">true</item>
+        <item name="android:clickable">true</item>
+        <item name="android:paddingStart">24dp</item>
+        <item name="android:paddingEnd">24dp</item>
+        <item name="android:paddingTop">18dp</item>
+        <item name="android:paddingBottom">18dp</item>
+        <item name="android:layout_marginBottom">8dp</item>
+    </style>
+
+    <style name="TextAppearance.EvriText.Screen" parent="TextAppearance.Material3.HeadlineMedium">
+        <item name="android:textColor">@color/on_surface</item>
+    </style>
+
+    <style name="TextAppearance.EvriText.Section" parent="TextAppearance.Material3.TitleSmall">
+        <item name="android:textColor">@color/on_surface_variant</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:textAllCaps">true</item>
+    </style>
+
+    <style name="TextAppearance.EvriText.RowTitle" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:textColor">@color/on_surface</item>
+    </style>
+
+    <style name="TextAppearance.EvriText.RowValue" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:textColor">@color/on_surface_variant</item>
+    </style>
+
+</resources>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android TV shows a 320x180 banner on the home row. Placeholder until there
+     is real artwork; a missing banner makes the app invisible on the launcher. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/surface_container" />
+            <corners android:radius="8dp" />
+        </shape>
+    </item>
+    <item android:gravity="center">
+        <shape android:shape="rectangle">
+            <size
+                android:width="180dp"
+                android:height="8dp" />
+            <solid android:color="@color/primary" />
+            <corners android:radius="4dp" />
+        </shape>
+    </item>
+</layer-list>

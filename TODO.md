@@ -29,11 +29,14 @@ Madde madde, tek satır. Ayrıntı gerekirse `DESIGN.md` veya `phase0/DURUM.md`.
 
 ## Phase 1 — Android uygulaması (Kotlin)
 
-- [ ] Proje iskeleti: Android TV uygulaması, leanback launcher, min API 28
-- [ ] `PositionTracker`'ı Kotlin'e port et — `evri/tracking.py`, R1'in kalbi, birebir çevrilecek
-- [ ] Lounge protokolünü Kotlin/OkHttp ile yaz — `evri/lounge.py` referans (R3)
-- [ ] **Periyodik `getNowPlaying` çapa döngüsü** — TV kendiliğinden pozisyon göndermiyor, bu zorunlu
-- [ ] **Yeniden abone olma döngüsü** — bind kanalı birkaç dakikada kapanıyor, `subscribe_forever` referans
+- [x] Proje iskeleti: `android/`, tek modül, leanback launcher, minSdk 28 / target 35, Gradle 8.13 + AGP 8.9 + Kotlin 2.1
+- [x] `PositionTracker` Kotlin portu — bağımlılıksız, `Clock` enjekte edilebilir (birim testi için)
+- [x] **Lounge protokolü Kotlin/OkHttp ile yazıldı (R3 KAPANDI)** — cihazda doğrulandı: bağlanma, chunk çözme, olay ayrıştırma, pozisyon takibi
+- [x] Periyodik `getNowPlaying` çapa döngüsü — 20 sn, cihazda çalıştığı loglandı
+- [x] Yeniden abone olma döngüsü — `LoungeSession.subscribeForever`, üstel geri çekilme
+- [x] **Foreground service** — oturum Activity'de yaşayamıyor: YouTube öne gelince Android Activity'yi yok edip takibi öldürüyor
+- [ ] Servisi boot'ta başlat + kullanıcı ayarından aç/kapat
+- [ ] `PositionTracker` birim testleri (hız değişimi, reklam, video değişimi)
 - [ ] Kendi overlay'imiz: `SYSTEM_ALERT_WINDOW`, TvOverlay'in yerine geçecek
 - [ ] Overlay izni akışı: kullanıcıyı `MANAGE_OVERLAY_PERMISSION` ekranına yönlendir
 - [ ] Altyazı görünümü: yazı boyutu, kontrast, arka plan, konum — anne okuyabilsin diye ayarlanabilir
