@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Above the TV's overscan crop, and clear of YouTube's own progress bar,
+         which appears at the very bottom when the remote is touched.
+         Becomes a user setting — the right value depends on the TV's own crop. -->
+    <dimen name="subtitle_bottom_margin">40dp</dimen>
+
+    <!-- ~70% of a 960dp-wide TV layout: wide enough for a full sentence, narrow
+         enough that the eye does not have to travel the whole screen. -->
+    <dimen name="subtitle_max_width">680dp</dimen>
+
+    <!-- Read from a couch, not a desk. This is the setting most likely to need
+         tuning per household, so it becomes a user preference later. -->
+    <dimen name="subtitle_text_size">22sp</dimen>
+</resources>

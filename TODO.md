@@ -39,7 +39,8 @@ Madde madde, tek satır. Ayrıntı gerekirse `DESIGN.md` veya `phase0/DURUM.md`.
 - [ ] `PositionTracker` birim testleri (hız değişimi, reklam, video değişimi)
 - [ ] Kendi overlay'imiz: `SYSTEM_ALERT_WINDOW`, TvOverlay'in yerine geçecek
 - [ ] Overlay izni akışı: kullanıcıyı `MANAGE_OVERLAY_PERMISSION` ekranına yönlendir
-- [ ] Altyazı görünümü: yazı boyutu, kontrast, arka plan, konum — anne okuyabilsin diye ayarlanabilir
+- [x] Kendi overlay'imiz — `TYPE_APPLICATION_OVERLAY`, alt-orta, cihazda YouTube üstünde doğrulandı
+- [ ] **Altyazı görünümü ayarlanabilir olsun:** yazı boyutu, alttan boşluk, arka plan opaklığı, maksimum genişlik. Şu an `dimens.xml`'de sabit (22sp / 40dp), TV'nin overscan miktarına göre değişmesi gerekiyor
 - [ ] **Kademeli çeviri:** ilk chunk biter bitmez altyazıyı göster, tüm videoyu bekleme — Phase 0'da ilk altyazı 89 sn sonra geldi
 - [ ] Altyazı çizimi ana thread'den ayrı olmalı — Phase 0'da senkron HTTP çağrısı event loop'u dondurdu, gecikme kartopu oldu
 - [ ] "Altyazı hazırlanıyor" göstergesi: kullanıcı bekleme sırasında ne olduğunu görsün

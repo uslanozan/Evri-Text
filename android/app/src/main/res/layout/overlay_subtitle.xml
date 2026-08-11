@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Centred with a max width so long lines wrap into two rows instead of stretching
+     across the whole screen, which is unreadable at TV viewing distance. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <TextView
+        android:id="@+id/subtitleText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:maxWidth="@dimen/subtitle_max_width"
+        android:background="@color/subtitle_background"
+        android:paddingStart="20dp"
+        android:paddingTop="10dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="10dp"
+        android:gravity="center"
+        android:maxLines="3"
+        android:ellipsize="end"
+        android:textColor="@color/subtitle_text"
+        android:textSize="@dimen/subtitle_text_size"
+        android:lineSpacingMultiplier="1.15"
+        android:shadowColor="#FF000000"
+        android:shadowDx="0"
+        android:shadowDy="2"
+        android:shadowRadius="6" />
+
+</FrameLayout>

@@ -18,6 +18,7 @@ import tr.com.uslanozan.evritext.R
 import tr.com.uslanozan.evritext.lounge.AuthState
 import tr.com.uslanozan.evritext.lounge.LoungeClient
 import tr.com.uslanozan.evritext.lounge.LoungeSession
+import tr.com.uslanozan.evritext.overlay.SubtitleOverlay
 import tr.com.uslanozan.evritext.ui.MainActivity
 import java.io.File
 import java.util.Locale
@@ -33,6 +34,7 @@ import java.util.Locale
 class EvriService : LifecycleService() {
 
     private var session: LoungeSession? = null
+    private var overlay: SubtitleOverlay? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -92,6 +94,51 @@ class EvriService : LifecycleService() {
                 delay(2000)
             }
         }
+
+        startOverlay(session)
+    }
+
+    /**
+     * Step D: our own overlay, driven at cue granularity.
+     *
+     * Until the translation pipeline is ported it renders the tracked position, which
+     * is the honest thing to show — if this number is right and readable over
+     * fullscreen YouTube, subtitles are only a matter of swapping the string.
+     */
+    private fun startOverlay(session: LoungeSession) {
+        val overlay = SubtitleOverlay(this).also { this.overlay = it }
+        if (!overlay.attach()) {
+            updateNotification("Overlay izni yok")
+            return
+        }
+        lifecycleScope.launch {
+            while (currentCoroutineContext().isActive) {
+                val tracker = session.tracker
+                val prediction = tracker.predict()
+                overlay.show(
+                    when {
+                        // Position is meaningless during ads (R5) and while stopped.
+                        tracker.inAd -> null
+                        prediction == null -> null
+                        !tracker.advancing -> null
+                        else -> "▶ ${formatSeconds(prediction.positionS)}   " +
+                            "çapa ${String.format(Locale.US, "%.0f", prediction.anchorAgeS)} sn"
+                    },
+                )
+                delay(TICK_MS)
+            }
+        }
+    }
+
+    private fun formatSeconds(total: Double): String {
+        val whole = total.toLong().coerceAtLeast(0)
+        return String.format(
+            Locale.US,
+            "%d:%02d:%02d",
+            whole / 3600,
+            (whole % 3600) / 60,
+            whole % 60,
+        )
     }
 
     private fun buildNotification(text: String): Notification {
@@ -125,6 +172,7 @@ class EvriService : LifecycleService() {
 
     override fun onDestroy() {
         session?.stop()
+        overlay?.detach()
         current = null
         super.onDestroy()
     }
@@ -136,6 +184,9 @@ class EvriService : LifecycleService() {
         private const val DEVICE_NAME = "Evri-Text"
         private const val CHANNEL_ID = "evritext.session"
         private const val NOTIFICATION_ID = 1
+
+        /** Cue changes are perceptible well under a second; 150 ms is comfortably under. */
+        private const val TICK_MS = 150L
 
         /**
          * The running session, for the settings screen to read.
