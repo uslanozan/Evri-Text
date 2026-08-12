@@ -44,11 +44,13 @@ Madde madde, tek satır. Ayrıntı gerekirse `DESIGN.md` veya `phase0/DURUM.md`.
 - [ ] **Kademeli çeviri:** ilk chunk biter bitmez altyazıyı göster, tüm videoyu bekleme — Phase 0'da ilk altyazı 89 sn sonra geldi
 - [ ] Altyazı çizimi ana thread'den ayrı olmalı — Phase 0'da senkron HTTP çağrısı event loop'u dondurdu, gecikme kartopu oldu
 - [ ] "Altyazı hazırlanıyor" göstergesi: kullanıcı bekleme sırasında ne olduğunu görsün
-- [ ] Caption çekme: yt-dlp yerine NewPipeExtractor — `evri/captions.py` referans
-- [ ] VTT parse + ASR temizliği portu — `evri/cues.py`
-- [ ] Cümle birleştirme portu — `evri/sentences.py`
-- [ ] Çeviri hattı portu — `evri/pipeline.py`
-- [ ] Cihaz üstü önbellek: `videoId + dil + provider + promptSürümü` anahtarı, Phase 0 ile aynı şema
+- [x] Caption çekme: NewPipeExtractor — cihazda çalışıyor. İki tuzak: TTML yerine `fmt=vtt` zorlanmalı, ve `desugar_jdk_libs_nio` şart (API 30'da `URLDecoder.decode(String,Charset)` yok)
+- [x] VTT parse + ASR temizliği portu — Python'la **birebir aynı sonuç** (1305 cue), parity testi var
+- [x] Cümle birleştirme portu — birebir aynı (826 cümle)
+- [x] Çeviri portu — Phase 0'ın beş prompt dersi taşındı, gerçek API'ye karşı testi var
+- [x] **Kademeli çeviri** — izlenen pozisyonun chunk'ı önce; ilk altyazı 89 sn → **8,5 sn**
+- [x] Cihaz üstü önbellek: `videoId + dil + provider + promptSürümü`
+- [ ] Önbellek boyut tavanı + LRU tahliye (şu an sınırsız büyüyor)
 - [ ] Önbellek saklama politikası: boyut tavanı (~100 MB) + LRU tahliye — 98 dk film 72 KB, yani ~1400 film sığar
 - [ ] Prompt sürümü değişince eski anahtarları temizle (Phase 0'da elle siliyoruz)
 - [ ] Önbellek anahtarına model adını ekle — şu an model değişince eski çıktı HIT dönüyor

@@ -272,7 +272,7 @@ Son satır tasarımı değiştiriyor. Mevcut hat **tüm video çevrilene kadar h
 | # | Risk | Durum / azaltma |
 |---|---|---|
 | **R1** | **Senkron kayması.** Lounge olayları nabız atışı göndermiyor; arada interpolasyon yapıyoruz | ✅ **KAPANDI — p95 234 ms.** Nabız atışı olmadığı doğrulandı, ama `getNowPlaying`'in sorgu limiti de yok; 20 sn'de bir çapa fazlasıyla yetiyor. Canlı testte senkron tuttu. Elle offset ayarı yine de kalacak |
-| **R2** | **Extractor bakımı bize kalıyor.** SmartTube fork'unda poToken/BotGuard'ı upstream hallediyordu; bağımsız uygulamada caption ve ses akışını kendimiz çekeceğiz | NewPipeExtractor'ı Gradle bağımlılığı olarak ekle (`PoTokenProvider` hook'u var). YouTube değiştirdikçe bağımlılık güncellemek gerekiyor. **Bu mimarinin kabul edilen bedeli** |
+| **R2** | **Extractor bakımı bize kalıyor.** SmartTube fork'unda poToken/BotGuard'ı upstream hallediyordu; bağımsız uygulamada caption ve ses akışını kendimiz çekeceğiz | 🟡 **Çalışıyor, ama risk kalıcı.** NewPipeExtractor v0.26.4 cihazda caption buluyor. İki tuzak çıktı: URL `fmt=ttml` ile geliyor, `fmt=vtt`'ye zorlanmalı; ve kütüphane `URLDecoder.decode(String,Charset)` (API 33+) çağırdığı için API 30'da **`desugar_jdk_libs_nio`** zorunlu. YouTube değiştikçe güncellemek gerekecek — **bu mimarinin kabul edilen bedeli** |
 | **R3** | **Lounge protokolünün JVM implementasyonu yok.** Python, Rust, Go, Node var; Kotlin yok | ✅ **KAPANDI.** OkHttp ile sıfırdan yazıldı ve cihazda doğrulandı: bağlanma, bind kanalı chunk çözme, olay ayrıştırma, interpolasyon, 20 sn'lik yeniden çapa. Çapa anındaki sapma ~110 ms, Phase 0 ölçümüyle tutarlı |
 | **R4** | **Overlay'in tam ekran YouTube üzerinde göründüğü cihazda doğrulanmadı** | ✅ **KAPANDI.** Bu cihazda kanıtlandı. Tek uyarı: engelleme API'si API 31'de, cihaz API 30 — bir sürüm payımız var |
 | **R5** | **Reklamlar.** Reklam sırasında pozisyon anlamını yitiriyor | 🟡 **Test edilmedi** — Phase 0 koşularında hiç reklam çıkmadı. Kod yolu var (`tracker.in_ad` → overlay gizleniyor) ama gerçek reklamla doğrulanmadı |
@@ -321,10 +321,14 @@ Sıralama riske göre: **R3 (Lounge'ın Kotlin portu) tek gerçek belirsizlik**,
    Buradan çıkan mimari kural: **oturum Activity'de yaşayamaz.** YouTube öne geldiği anda Android bizim Activity'mizi yok ediyor ve takip ölüyor. Süreç hayatta kalıyor ama coroutine'ler iptal oluyor. Servis zorunlu, ekran yalnızca bir ayar paneli.
 3. **Eşleştirme akışı** — TV kodu girişi, auth state kalıcı saklama
    *(şimdilik Phase 0'ın `lounge_auth.json`'ı `adb push` ile taşınıyor)*
-4. **`SubtitleOverlay`** — `TYPE_APPLICATION_OVERLAY`, foreground service, çizim ayrı thread'de, alt-orta konum
-5. **Caption + çeviri hattı portu** — NewPipeExtractor + `evri` modülleri, **kademeli çeviri ile**
-6. **Ayarlar** — API key (`EncryptedSharedPreferences`), dil, model, offset, önbellek yönetimi
-7. Cihazda gerçek test
+4. ✅ **`SubtitleOverlay`** — `TYPE_APPLICATION_OVERLAY`, alt-orta, cihazda YouTube üstünde doğrulandı
+5. ✅ **Caption + çeviri hattı portu** — NewPipeExtractor + `evri` modüllerinin portu, kademeli çeviriyle.
+   Cihazda uçtan uca çalışıyor: **ilk altyazı 8,5 saniyede** (Phase 0'da 89 sn), tam video 19 saniyede.
+   Ayrıştırma ve cümle birleştirme Python'la birebir aynı sonucu veriyor — parity testiyle sabitlendi.
+6. **Ayarlar** — API key (`EncryptedSharedPreferences`), dil, model, offset, altyazı görünümü, önbellek yönetimi
+   *(şimdilik key ve eşleştirme `adb push` ile dosya olarak duruyor)*
+7. **Eşleştirme ekranı** — TV kodu girişi
+8. Servis boot'ta başlasın, kullanıcı ayarından açılıp kapansın
 
 ### Phase 2 — STT fallback *(ertelendi)*
 

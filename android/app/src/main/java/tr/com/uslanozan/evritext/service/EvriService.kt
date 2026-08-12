@@ -15,10 +15,15 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import tr.com.uslanozan.evritext.R
+import kotlinx.coroutines.Job
 import tr.com.uslanozan.evritext.lounge.AuthState
 import tr.com.uslanozan.evritext.lounge.LoungeClient
 import tr.com.uslanozan.evritext.lounge.LoungeSession
 import tr.com.uslanozan.evritext.overlay.SubtitleOverlay
+import tr.com.uslanozan.evritext.subtitles.Cue
+import tr.com.uslanozan.evritext.subtitles.SubtitleEngine
+import tr.com.uslanozan.evritext.subtitles.Vtt
+import tr.com.uslanozan.evritext.translate.GeminiTranslationProvider
 import tr.com.uslanozan.evritext.ui.MainActivity
 import java.io.File
 import java.util.Locale
@@ -35,6 +40,10 @@ class EvriService : LifecycleService() {
 
     private var session: LoungeSession? = null
     private var overlay: SubtitleOverlay? = null
+
+    /** Written by the build coroutine, read by the render loop; swapped, never mutated. */
+    @Volatile
+    private var cues: List<Cue> = emptyList()
 
     override fun onCreate() {
         super.onCreate()
@@ -96,7 +105,82 @@ class EvriService : LifecycleService() {
         }
 
         startOverlay(session)
+        startSubtitles(session)
     }
+
+    /**
+     * Builds subtitles for whatever starts playing, and keeps [cues] pointing at the
+     * current video's translation. A video change cancels the previous build — nobody
+     * is waiting on subtitles for a video they already left.
+     */
+    private fun startSubtitles(session: LoungeSession) {
+        val apiKey = File(filesDir, API_KEY_FILE).takeIf { it.exists() }?.readText()?.trim()
+        if (apiKey.isNullOrEmpty()) {
+            Log.e(TAG, "no API key at files/$API_KEY_FILE")
+            updateNotification("API anahtarı yok")
+            return
+        }
+        val engine = SubtitleEngine(
+            provider = GeminiTranslationProvider(apiKey),
+            cacheDir = File(cacheDir, "subs"),
+        )
+
+        lifecycleScope.launch {
+            var lastVideoId: String? = null
+            var job: Job? = null
+            while (currentCoroutineContext().isActive) {
+                val videoId = session.tracker.videoId
+                if (videoId != null && videoId != lastVideoId) {
+                    lastVideoId = videoId
+                    job?.cancel()
+                    cues = emptyList()
+                    job = launch { buildFor(engine, session, videoId) }
+                }
+                delay(500)
+            }
+        }
+    }
+
+    private suspend fun buildFor(
+        engine: SubtitleEngine,
+        session: LoungeSession,
+        videoId: String,
+    ) {
+        val startMs = ((session.tracker.predict()?.positionS ?: 0.0) * 1000).toLong()
+        Log.i(TAG, "building subtitles for $videoId from ${startMs}ms")
+        val started = System.currentTimeMillis()
+        var firstCues = true
+
+        val result = engine.build(videoId, startMs) { partial ->
+            cues = partial
+            if (firstCues && partial.isNotEmpty()) {
+                firstCues = false
+                Log.i(TAG, "first cues after ${System.currentTimeMillis() - started}ms")
+            }
+        }
+
+        when (result) {
+            is SubtitleEngine.Result.Ready -> {
+                cues = result.cues
+                Log.i(
+                    TAG,
+                    "$videoId ready: ${result.cues.size} cues in " +
+                        "${System.currentTimeMillis() - started}ms " +
+                        if (result.fromCache) "(cache)" else "(fresh)",
+                )
+            }
+
+            is SubtitleEngine.Result.AlreadySubtitled ->
+                Log.i(TAG, "$videoId already has ${result.languageTag} subtitles — standing down")
+
+            is SubtitleEngine.Result.NoCaptions ->
+                Log.w(TAG, "$videoId has no usable captions (Phase 2 territory)")
+
+            is SubtitleEngine.Result.Failed ->
+                Log.e(TAG, "$videoId failed: ${result.reason}")
+        }
+    }
+
 
     /**
      * Step D: our own overlay, driven at cue granularity.
@@ -121,8 +205,7 @@ class EvriService : LifecycleService() {
                         tracker.inAd -> null
                         prediction == null -> null
                         !tracker.advancing -> null
-                        else -> "▶ ${formatSeconds(prediction.positionS)}   " +
-                            "çapa ${String.format(Locale.US, "%.0f", prediction.anchorAgeS)} sn"
+                        else -> Vtt.cueAt(cues, (prediction.positionS * 1000).toLong())?.text
                     },
                 )
                 delay(TICK_MS)
@@ -181,6 +264,9 @@ class EvriService : LifecycleService() {
         private const val TAG = "EvriService"
         private const val PROBE_TAG = "Probe"
         private const val AUTH_FILE = "lounge_auth.json"
+
+        /** Pushed with adb until the settings screen can store it properly. */
+        private const val API_KEY_FILE = "gemini_api_key.txt"
         private const val DEVICE_NAME = "Evri-Text"
         private const val CHANNEL_ID = "evritext.session"
         private const val NOTIFICATION_ID = 1

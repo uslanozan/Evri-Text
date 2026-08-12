@@ -10,6 +10,8 @@ lifecycle = "2.8.7"
 coroutines = "1.9.0"
 okhttp = "4.12.0"
 serialization = "1.7.3"
+newpipe = "v0.26.4"
+desugar = "2.1.5"
 junit = "4.13.2"
 
 [libraries]
@@ -23,6 +25,10 @@ lifecycle-service = { group = "androidx.lifecycle", name = "lifecycle-service", 
 coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }
+newpipe-extractor = { group = "com.github.TeamNewPipe", name = "NewPipeExtractor", version.ref = "newpipe" }
+# The _nio variant, not the plain one: NewPipeExtractor needs java.net/java.nio
+# backports that only it carries, and without them the app dies on the first probe.
+desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs_nio", version.ref = "desugar" }
 
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }

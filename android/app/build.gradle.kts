@@ -35,6 +35,10 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        // NewPipeExtractor calls URLDecoder.decode(String, Charset), which Android
+        // only gained in API 33; the target box is API 30. NewPipe's own app solves
+        // it the same way.
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -43,6 +47,23 @@ android {
 
     buildFeatures {
         viewBinding = true
+    }
+
+    testOptions {
+        unitTests {
+            // android.util.Log is a stub in unit tests; without this every call to it
+            // throws instead of returning 0, which would fail tests for no reason.
+            isReturnDefaultValues = true
+
+            all {
+                // These tests print real translations and track listings; the output
+                // is the point, not just the pass/fail.
+                it.testLogging {
+                    showStandardStreams = true
+                    events("passed", "failed", "skipped")
+                }
+            }
+        }
     }
 }
 
@@ -57,6 +78,8 @@ dependencies {
     implementation(libs.coroutines.android)
     implementation(libs.okhttp)
     implementation(libs.serialization.json)
+    implementation(libs.newpipe.extractor)
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)
