@@ -56,6 +56,8 @@ Madde madde, tek satır. Ayrıntı gerekirse `DESIGN.md` veya `phase0/DURUM.md`.
 - [ ] Önbellek anahtarına model adını ekle — şu an model değişince eski çıktı HIT dönüyor
 - [ ] Ayarlarda "önbelleği temizle" düğmesi + kullanılan alanı göster
 - [ ] Eşleştirme akışı: TV kodunu uygulama içinden girme, auth state'i kalıcı sakla
+- [x] **Aç/kapa anahtarı** — ayarlarda ilk satır, varsayılan kapalı. Kapalıyken overlay çizilmiyor ve çeviri isteği atılmıyor
+- [ ] Kısayolla aç/kapa — kumandadan uygulamaya girmeden. Seçenekler: `MediaSession` üzerinden bir tuş, ya da YouTube'un kullanmadığı bir tuşu `InputManager` ile yakalamak (izin sınırları araştırılmalı)
 - [ ] Ayarlar ekranı: offset, yeniden çapa aralığı, hedef dil, model seçimi
 - [ ] Servis olarak arka planda çalışma + boot'ta otomatik başlama
 - [ ] Pil/doze davranışı: `deviceidle whitelist` gerekli mi, kullanıcıdan nasıl istenir

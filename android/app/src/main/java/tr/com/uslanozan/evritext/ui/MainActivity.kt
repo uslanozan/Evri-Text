@@ -14,6 +14,7 @@ import tr.com.uslanozan.evritext.databinding.ActivityMainBinding
 import tr.com.uslanozan.evritext.databinding.ItemSettingRowBinding
 import tr.com.uslanozan.evritext.lounge.LoungeSession
 import tr.com.uslanozan.evritext.service.EvriService
+import tr.com.uslanozan.evritext.settings.Settings
 import java.util.Locale
 
 /**
@@ -26,12 +27,15 @@ import java.util.Locale
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+    private lateinit var settings: Settings
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        settings = Settings(this)
+        binding.rowEnabled.root.setOnClickListener { settings.toggle() }
         binding.rowApiKey.bind(R.string.setting_api_key, getString(R.string.setting_api_key_empty))
         binding.rowTargetLang.bind(R.string.setting_target_lang, "Türkçe")
         binding.rowModel.bind(R.string.setting_model, "gemini-3.5-flash-lite")
@@ -39,7 +43,7 @@ class MainActivity : AppCompatActivity() {
         binding.rowCache.bind(R.string.setting_cache, "0 MB")
 
         // A TV screen with nothing focused swallows the first D-pad press.
-        binding.rowApiKey.root.requestFocus()
+        binding.rowEnabled.root.requestFocus()
 
         EvriService.start(this)
 
@@ -54,9 +58,21 @@ class MainActivity : AppCompatActivity() {
             val tracker = session?.tracker
             val prediction = tracker?.predict()
 
-            binding.statusLine.text = when (session?.status?.value) {
-                LoungeSession.Status.CONNECTED -> getString(R.string.status_connected)
-                LoungeSession.Status.CONNECTING -> getString(R.string.status_connecting)
+            val on = settings.enabled.value
+            binding.rowEnabled.bind(
+                R.string.setting_enabled,
+                if (on) getString(R.string.setting_enabled_on) else getString(R.string.setting_enabled_off),
+            )
+            binding.rowEnabled.rowValue.setTextColor(
+                getColor(if (on) R.color.success else R.color.on_surface_variant),
+            )
+
+            binding.statusLine.text = when {
+                !on -> getString(R.string.setting_enabled_hint)
+                session?.status?.value == LoungeSession.Status.CONNECTED ->
+                    getString(R.string.status_connected)
+                session?.status?.value == LoungeSession.Status.CONNECTING ->
+                    getString(R.string.status_connecting)
                 else -> getString(R.string.status_not_connected)
             }
 

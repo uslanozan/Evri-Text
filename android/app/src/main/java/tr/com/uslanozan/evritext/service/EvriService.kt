@@ -20,6 +20,7 @@ import tr.com.uslanozan.evritext.lounge.AuthState
 import tr.com.uslanozan.evritext.lounge.LoungeClient
 import tr.com.uslanozan.evritext.lounge.LoungeSession
 import tr.com.uslanozan.evritext.overlay.SubtitleOverlay
+import tr.com.uslanozan.evritext.settings.Settings
 import tr.com.uslanozan.evritext.subtitles.Cue
 import tr.com.uslanozan.evritext.subtitles.SubtitleEngine
 import tr.com.uslanozan.evritext.subtitles.Vtt
@@ -41,14 +42,28 @@ class EvriService : LifecycleService() {
     private var session: LoungeSession? = null
     private var overlay: SubtitleOverlay? = null
 
+    private lateinit var settings: Settings
+
     /** Written by the build coroutine, read by the render loop; swapped, never mutated. */
     @Volatile
     private var cues: List<Cue> = emptyList()
 
+    /** The video [cues] belongs to, so toggling off and on does not rebuild it. */
+    @Volatile
+    private var builtVideoId: String? = null
+
     override fun onCreate() {
         super.onCreate()
+        settings = Settings(this)
         startForeground(NOTIFICATION_ID, buildNotification("Bağlanıyor…"))
         startSession()
+
+        lifecycleScope.launch {
+            settings.enabled.collect { on ->
+                Log.i(TAG, "subtitles ${if (on) "on" else "off"}")
+                if (!on) overlay?.show(null)
+            }
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -126,14 +141,26 @@ class EvriService : LifecycleService() {
         )
 
         lifecycleScope.launch {
-            var lastVideoId: String? = null
             var job: Job? = null
             while (currentCoroutineContext().isActive) {
-                val videoId = session.tracker.videoId
-                if (videoId != null && videoId != lastVideoId) {
-                    lastVideoId = videoId
+                if (!settings.enabled.value) {
+                    // Switching off cancels an in-flight build but keeps whatever is
+                    // already translated. Discarding it would mean paying for the same
+                    // sentences again on the next toggle — and a half-finished build is
+                    // never written to the disk cache, so nothing else would save us.
                     job?.cancel()
+                    job = null
+                    delay(500)
+                    continue
+                }
+                val videoId = session.tracker.videoId
+                if (videoId != null && videoId != builtVideoId) {
+                    builtVideoId = videoId
                     cues = emptyList()
+                    job = launch { buildFor(engine, session, videoId) }
+                } else if (videoId != null && job == null && cues.isEmpty()) {
+                    // Same video, but the previous build was cancelled before it
+                    // produced anything. Pick it back up.
                     job = launch { buildFor(engine, session, videoId) }
                 }
                 delay(500)
@@ -201,6 +228,7 @@ class EvriService : LifecycleService() {
                 val prediction = tracker.predict()
                 overlay.show(
                     when {
+                        !settings.enabled.value -> null
                         // Position is meaningless during ads (R5) and while stopped.
                         tracker.inAd -> null
                         prediction == null -> null

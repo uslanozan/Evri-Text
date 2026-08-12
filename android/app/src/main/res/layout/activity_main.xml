@@ -54,6 +54,12 @@
             android:text="@string/settings_title"
             android:textAppearance="@style/TextAppearance.EvriText.Section" />
 
+        <!-- First row on purpose: it is the one thing anyone in the house will ever
+             need to touch, and the D-pad lands here on open. -->
+        <include
+            android:id="@+id/rowEnabled"
+            layout="@layout/item_setting_row" />
+
         <include
             android:id="@+id/rowApiKey"
             layout="@layout/item_setting_row" />

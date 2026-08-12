@@ -8,6 +8,10 @@
     <string name="status_connected">Bağlı</string>
 
     <string name="settings_title">Ayarlar</string>
+    <string name="setting_enabled">Altyazı</string>
+    <string name="setting_enabled_on">Açık</string>
+    <string name="setting_enabled_off">Kapalı</string>
+    <string name="setting_enabled_hint">Açmak için OK tuşuna bas</string>
     <string name="setting_api_key">API anahtarı</string>
     <string name="setting_api_key_empty">Ayarlanmadı</string>
     <string name="setting_target_lang">Hedef dil</string>
