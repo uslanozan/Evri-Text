@@ -16,6 +16,17 @@ Madde madde, tek satır. Ayrıntı gerekirse `DESIGN.md` veya `phase0/DURUM.md`.
 - [x] R1 — senkron ölçümü: p95 kayma 234 ms, YEŞİL
 - [x] Çeviri hattı uçtan uca çalışıyor: 826 cue, 0 başarısız chunk
 
+## Cihazda doğrulanacaklar (TV müsait olunca, babanla birlikte)
+
+Hepsi kod olarak hazır ve derleniyor; sadece gerçek TV'de görülmedi.
+Kurulum: `cd android; .\gradlew.bat assembleDebug; adb install -r app\build\outputs\apk\debug\app-debug.apk`
+
+- [ ] **Otomatik oynatma** — babanın bildirdiği hata. Bağlanınca ekranın autoplay'i kendiliğinden açılıyordu (Phase 0 logunda bağlantı anındaki ilk olay: `onAutoplayModeChanged {enabled:true}`). Artık her bağlanışta `setAutoplayMode(DISABLED)` gönderiliyor. **Test:** video bitene kadar bekle, kendiliğinden sonrakine geçmemeli
+- [ ] **Aç/kapa anahtarı** — ayarlarda ilk satır, OK ile açılıp kapanmalı; kapatınca overlay anında kaybolmalı, açınca aynı videoda yeniden çeviri yapmamalı
+- [ ] **Reklam sonrası senkron** — birim testinin yakaladığı hata düzeltildi; gerçek bir reklamlı videoda altyazı reklam sonrası kaymamalı
+- [ ] **Duraklat/devam** — uzun süre duraklatıp devam ettir, altyazı doğru yerden sürmeli
+- [ ] Altyazı konumu ve boyutu (40dp / 22sp) koltuktan rahat mı
+
 ## Phase 0 — bilinen eksikler (bloke etmiyor)
 
 - [ ] Önbellek anahtarı model adını içermiyor: model değişince eski çıktı HIT dönüyor, elle silmek gerekiyor

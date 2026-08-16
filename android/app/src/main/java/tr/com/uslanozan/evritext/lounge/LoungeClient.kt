@@ -165,6 +165,18 @@ class LoungeClient(
     /** Ask the screen for its current position. The only re-anchoring tool we have. */
     suspend fun getNowPlaying(): Boolean = command("getNowPlaying")
 
+    /**
+     * Turns the screen's autoplay on or off.
+     *
+     * Needed because merely connecting turns it **on**: the first event the screen
+     * sends after `connect()` is `onAutoplayModeChanged {enabled: true}`, regardless
+     * of what the viewer set in YouTube's own settings. A lounge session carries its
+     * own autoplay state and defaults it on for a remote that advertises queue
+     * support, which ours does.
+     */
+    suspend fun setAutoplayMode(enabled: Boolean): Boolean =
+        command("setAutoplayMode", mapOf("autoplayMode" to if (enabled) "ENABLED" else "DISABLED"))
+
     suspend fun play(): Boolean = command("play")
 
     suspend fun pause(): Boolean = command("pause")

@@ -92,7 +92,7 @@ class GeminiTranslationProvider(
         for (attempt in 1..maxAttempts) {
             try {
                 val reply = request(body)
-                parseIndexed(reply, sentences.size).forEachIndexed { index, value ->
+                GeminiReply.parseIndexed(reply, sentences.size).forEachIndexed { index, value ->
                     if (best[index] == null && value != null) best[index] = value
                 }
                 if (best.all { it != null }) {
@@ -137,89 +137,20 @@ class GeminiTranslationProvider(
     }
 
     /**
-     * Parses into [expected] slots, leaving unreturned ones null so the caller can
-     * fill just those from the source text.
-     */
-    private fun parseIndexed(raw: String, expected: Int): List<String?> {
-        val text = raw.trim().removeFence()
-        // Models sometimes append a second array or a trailing note; a strict parse
-        // would throw away a reply that was otherwise complete.
-        val json = firstJsonValue(text) ?: error("no JSON in reply")
-        var data = Json.parseToJsonElement(json)
-        if (data is JsonObject) {
-            data = listOf("items", "translations", "result")
-                .firstNotNullOfOrNull { data.jsonObjectOrNull()?.get(it) } ?: data
-        }
-        val array = data as? JsonArray ?: error("expected a JSON array")
-
-        val out = arrayOfNulls<String>(expected)
-        for (element in array) {
-            val obj = element as? JsonObject ?: continue
-            val index = (obj["i"] as? JsonPrimitive)?.let {
-                runCatching { it.int }.getOrNull()
-            } ?: continue
-            if (index !in 0 until expected) continue
-            // "tr" is what the prompt asks for; the rest are what models actually
-            // produce often enough to be worth accepting rather than failing on.
-            for (field in listOf("tr", "translation", "text", "t")) {
-                val value = (obj[field] as? JsonPrimitive)?.takeIf { it.isString }?.content
-                if (!value.isNullOrBlank()) {
-                    out[index] = value
-                    break
-                }
-            }
-        }
-        if (out.all { it == null }) error("no usable translations in response")
-        return out.toList()
-    }
-
-    /** Scans for one complete JSON array or object, ignoring anything after it. */
-    private fun firstJsonValue(text: String): String? {
-        val start = text.indexOfFirst { it == '[' || it == '{' }
-        if (start < 0) return null
-        val open = text[start]
-        val close = if (open == '[') ']' else '}'
-        var depth = 0
-        var inString = false
-        var escaped = false
-        for (i in start until text.length) {
-            val c = text[i]
-            when {
-                escaped -> escaped = false
-                c == '\\' && inString -> escaped = true
-                c == '"' -> inString = !inString
-                inString -> Unit
-                c == open -> depth += 1
-                c == close -> {
-                    depth -= 1
-                    if (depth == 0) return text.substring(start, i + 1)
-                }
-            }
-        }
-        return null
-    }
-
-    private fun String.removeFence(): String {
-        if (!startsWith("```")) return this
-        return substringAfter('\n').substringBeforeLast("```").trim()
-    }
-
-    /**
      * Honours the server's own retryDelay on 429, else backs off exponentially. The
      * free tier allows 15 requests/minute and the reply carries the exact wait.
      */
-    private fun retryDelayMs(error: String?, attempt: Int): Long {
+    internal fun retryDelayMs(error: String?, attempt: Int): Long {
         val text = error.orEmpty()
         if ("RESOURCE_EXHAUSTED" in text || "429" in text) {
-            val seconds = Regex("""retryDelay"?:\s*"?(\d+)s""").find(text)?.groupValues?.get(1)
+            // Quote style varies with who serialised the error on the way here.
+            val seconds = Regex("""retryDelay['"]?\s*:\s*['"]?(\d+)s""")
+                .find(text)?.groupValues?.get(1)
                 ?: Regex("""[Rr]etry in ([\d.]+)s""").find(text)?.groupValues?.get(1)
             return min((seconds?.toDoubleOrNull()?.times(1000)?.toLong() ?: 30_000L) + 1_000L, 65_000L)
         }
         return min(2_000L * attempt, 10_000L)
     }
-
-    private fun kotlinx.serialization.json.JsonElement.jsonObjectOrNull(): JsonObject? =
-        this as? JsonObject
 
     companion object {
         private const val TAG = "GeminiTranslate"

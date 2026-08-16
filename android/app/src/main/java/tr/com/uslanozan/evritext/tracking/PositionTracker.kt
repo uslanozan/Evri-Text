@@ -67,12 +67,20 @@ class PositionTracker(
 
     /** Called from ad events only. `null` leaves the flag untouched. */
     fun setAdState(adState: Int?) {
-        if (adState != null) adActive = adState == STATE_ADVERTISEMENT
+        if (adState == null) return
+        val next = adState == STATE_ADVERTISEMENT
+        if (next != adActive) {
+            rebase()
+            adActive = next
+        }
     }
 
     /** Record a known-good position. Either argument may be null. */
     fun anchor(positionS: Double?, state: Int?) {
-        if (state != null) this.state = state
+        if (state != null && state != this.state) {
+            rebase()
+            this.state = state
+        }
         if (positionS != null) {
             anchorPositionS = positionS
             anchorMs = clock.nowMs()
@@ -81,8 +89,24 @@ class PositionTracker(
 
     /** Change playback speed without losing the time already elapsed at the old one. */
     fun setSpeed(speed: Double) {
-        predict()?.let { anchor(it.positionS, null) }
+        rebase()
         this.speed = speed
+    }
+
+    /**
+     * Moves the anchor to where the playhead is *right now*, under the rules still in
+     * force.
+     *
+     * Every transition that changes how time is counted has to do this first —
+     * pausing, resuming, an ad starting or ending, a speed change. Without it the
+     * elapsed time is later replayed under the new rules: an ad break would add its
+     * own thirty seconds to the video's position the moment the ad finished, and
+     * every subtitle after it would be thirty seconds early.
+     */
+    private fun rebase() {
+        val prediction = predict() ?: return
+        anchorPositionS = prediction.positionS
+        anchorMs = clock.nowMs()
     }
 
     fun predict(atMs: Long? = null): Prediction? {

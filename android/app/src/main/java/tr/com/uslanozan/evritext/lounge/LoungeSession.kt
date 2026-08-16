@@ -24,6 +24,12 @@ class LoungeSession(
     private val client: LoungeClient,
     private val scope: CoroutineScope,
     private val reanchorIntervalMs: Long = DEFAULT_REANCHOR_MS,
+    /**
+     * Restores the viewer's own autoplay choice, which connecting overrides. Left as a
+     * parameter because someone who actually wants autoplay should be able to keep it
+     * once this reaches the settings screen.
+     */
+    private val disableAutoplay: Boolean = true,
 ) {
 
     val tracker = PositionTracker()
@@ -67,6 +73,15 @@ class LoungeSession(
                 }
                 _status.value = Status.CONNECTED
                 backoffMs = MIN_BACKOFF_MS
+
+                if (disableAutoplay) {
+                    // Connecting silently switches the screen's autoplay ON, so the
+                    // next video starts by itself even though the viewer turned
+                    // autoplay off in YouTube. Undo it every time we reconnect — the
+                    // screen re-enables it on each new session, not just the first.
+                    runCatching { client.setAutoplayMode(enabled = false) }
+                        .onFailure { Log.w(TAG, "could not disable autoplay: ${it.message}") }
+                }
 
                 // Returns when the server closes the channel: the normal case.
                 client.subscribe(::onEvent)
