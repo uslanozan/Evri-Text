@@ -14,11 +14,12 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import tr.com.uslanozan.evritext.R
 import kotlinx.coroutines.Job
+import tr.com.uslanozan.evritext.R
 import tr.com.uslanozan.evritext.lounge.AuthState
 import tr.com.uslanozan.evritext.lounge.LoungeClient
 import tr.com.uslanozan.evritext.lounge.LoungeSession
+import tr.com.uslanozan.evritext.overlay.NoticeOverlay
 import tr.com.uslanozan.evritext.overlay.SubtitleOverlay
 import tr.com.uslanozan.evritext.settings.Settings
 import tr.com.uslanozan.evritext.subtitles.Cue
@@ -43,6 +44,7 @@ class EvriService : LifecycleService() {
     private var overlay: SubtitleOverlay? = null
 
     private lateinit var settings: Settings
+    private val notice by lazy { NoticeOverlay(this) }
 
     /** Written by the build coroutine, read by the render loop; swapped, never mutated. */
     @Volatile
@@ -178,13 +180,25 @@ class EvriService : LifecycleService() {
         val started = System.currentTimeMillis()
         var firstCues = true
 
+        // Several seconds of nothing reads as a broken app, so say what is happening —
+        // this notice is the only channel we have while YouTube is in front. But a
+        // cached video is ready almost instantly, and flashing "preparing" at someone
+        // for 200 ms is worse than staying quiet: wait to see if it is actually slow.
+        val preparing = lifecycleScope.launch {
+            delay(PREPARING_NOTICE_AFTER_MS)
+            if (cues.isEmpty()) notice.show(getString(R.string.notice_preparing), 20_000)
+        }
+
         val result = engine.build(videoId, startMs) { partial ->
             cues = partial
             if (firstCues && partial.isNotEmpty()) {
                 firstCues = false
+                preparing.cancel()
+                notice.dismiss()
                 Log.i(TAG, "first cues after ${System.currentTimeMillis() - started}ms")
             }
         }
+        preparing.cancel()
 
         when (result) {
             is SubtitleEngine.Result.Ready -> {
@@ -197,14 +211,20 @@ class EvriService : LifecycleService() {
                 )
             }
 
-            is SubtitleEngine.Result.AlreadySubtitled ->
-                Log.i(TAG, "$videoId already has ${result.languageTag} subtitles — standing down")
+            is SubtitleEngine.Result.AlreadySubtitled -> {
+                Log.i(TAG, "$videoId already in ${result.languageTag} — standing down")
+                notice.show(getString(R.string.notice_already_target))
+            }
 
-            is SubtitleEngine.Result.NoCaptions ->
+            is SubtitleEngine.Result.NoCaptions -> {
                 Log.w(TAG, "$videoId has no usable captions (Phase 2 territory)")
+                notice.show(getString(R.string.notice_no_captions))
+            }
 
-            is SubtitleEngine.Result.Failed ->
+            is SubtitleEngine.Result.Failed -> {
                 Log.e(TAG, "$videoId failed: ${result.reason}")
+                notice.show(getString(R.string.notice_failed))
+            }
         }
     }
 
@@ -284,6 +304,7 @@ class EvriService : LifecycleService() {
     override fun onDestroy() {
         session?.stop()
         overlay?.detach()
+        notice.detach()
         current = null
         super.onDestroy()
     }
@@ -301,6 +322,9 @@ class EvriService : LifecycleService() {
 
         /** Cue changes are perceptible well under a second; 150 ms is comfortably under. */
         private const val TICK_MS = 150L
+
+        /** Long enough that a cache hit never shows the notice at all. */
+        private const val PREPARING_NOTICE_AFTER_MS = 1_500L
 
         /**
          * The running session, for the settings screen to read.

@@ -62,6 +62,15 @@ class SubtitleEngine(
             .getOrElse { return Result.Failed("caption probe failed: ${it.message}") }
 
         info.manualIn(targetLang)?.let { return Result.AlreadySubtitled(it.languageTag) }
+
+        // YouTube only ever runs speech recognition in the language actually being
+        // spoken, so an automatic track in the target language means the video is in
+        // that language already. Standing down is the correct behaviour, not an
+        // optimisation: putting a machine paraphrase over speech the viewer already
+        // understands makes it worse, and pays for the privilege. It also means nobody
+        // has to remember to switch the app off before opening a Turkish video.
+        info.spokenIn(targetLang)?.let { return Result.AlreadySubtitled(it.languageTag) }
+
         val track = info.best() ?: return Result.NoCaptions(videoId)
 
         val vtt = runCatching { captions.download(track) }

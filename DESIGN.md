@@ -139,6 +139,36 @@ Lounge → videoId → NewPipeExtractor → ses akışı URL'si → STT API → 
 
 **Sınır:** canlı yayında çalışmaz — akışın "başı" olmadığı için gerçek zamanlı streaming STT gerekir, ayrı iş.
 
+### 2.5 STT'nin asıl sorunu zaman, metin değil
+
+`phase0/06_stt_probe.py` ile ölçüldü: aynı filmin sesini, altyazısı yokmuş gibi Gemini'ye
+yazdırıp sonucu videonun gerçek altyazısına hizaladık.
+
+| | |
+|---|---|
+| Transkripsiyon metni | Referansla neredeyse birebir — **sorun yok** |
+| Zaman damgası \|hata\| medyan | **2,27 s** |
+| p95 | **4,01 s** |
+| Hatanın karakteri | İşaretler karışık, büyüklük konumla artmıyor → **birikimli kayma değil, cümle başına belirsizlik** |
+
+Altyazı senkronu için gereken hassasiyet ~300 ms (R1'de ölçülen p95 234 ms). 2 saniye
+izlerken fark edilir. Ve hata birikimli olmadığı için "başta hizala" işe yaramıyor.
+
+**İkinci bulgu:** modelden "45. dakikadan itibaren yaz" diye istemek çalışmıyor. Model o
+noktaya atlamıyor, baştan yazıp damgaları istenen pencerenin başına kaydırıyor. Yani
+**sesi kendimiz kesmek zorundayız**, prompt'la aralık seçilemiyor.
+
+**Çıkış yolu — modelden zaman hiç istememek.** Sesi biz kestiğimiz için her parçanın
+dosyadaki yeri kesin. Parça yeterince kısaysa (6–8 sn) o parçanın metnini o parçanın
+aralığında göstermek yeter; modelin zaman tahmini hiç kullanılmaz. Bedeli: altyazının en
+küçük birimi parça uzunluğu olur ve parçaya bölünen cümleler ikiye ayrılır. 98 dakikalık
+film 8 sn'lik parçalarla ~740 istek demek.
+
+**Alternatif:** kelime düzeyinde zaman damgası veren STT servisleri (Deepgram, AssemblyAI,
+Whisper API) hizalamayı kendileri yapıyor, milisaniye hassasiyeti veriyorlar. Saatlik
+$0.15–0.60 — pahalı ama doğru araç. Phase 2 zaten ertelenmiş olduğu için karar o zamana
+bırakıldı.
+
 ---
 
 ## 3. Platform kararı: Kotlin, Flutter değil
@@ -276,7 +306,7 @@ Son satır tasarımı değiştiriyor. Mevcut hat **tüm video çevrilene kadar h
 | **R3** | **Lounge protokolünün JVM implementasyonu yok.** Python, Rust, Go, Node var; Kotlin yok | ✅ **KAPANDI.** OkHttp ile sıfırdan yazıldı ve cihazda doğrulandı: bağlanma, bind kanalı chunk çözme, olay ayrıştırma, interpolasyon, 20 sn'lik yeniden çapa. Çapa anındaki sapma ~110 ms, Phase 0 ölçümüyle tutarlı |
 | **R4** | **Overlay'in tam ekran YouTube üzerinde göründüğü cihazda doğrulanmadı** | ✅ **KAPANDI.** Bu cihazda kanıtlandı. Tek uyarı: engelleme API'si API 31'de, cihaz API 30 — bir sürüm payımız var |
 | **R5** | **Reklamlar.** Reklam sırasında pozisyon anlamını yitiriyor | 🟡 **Test edilmedi** — Phase 0 koşularında hiç reklam çıkmadı. Kod yolu var (`tracker.in_ad` → overlay gizleniyor) ama gerçek reklamla doğrulanmadı |
-| **R6** | Gemini STT timestamp'leri güvenilmez (dokümante edilmiş drift) | Phase 2'ye ertelendi (hiçbir video STT gerektirmedi). Azaltma aynı: sesi 30–60 sn parçalara böl |
+| **R6** | Gemini STT timestamp'leri güvenilmez | 🔴 **ÖLÇÜLDÜ — KIRMIZI.** Gerçek filmde, YouTube ASR'si doğruluk referansı alınarak: \|hata\| medyan **2,27 s**, p95 **4,01 s**. Metin kalitesi iyi, zamanlama değil. **Hata birikimli değil, her cümlede bağımsız** — yani "parçala, her parçanın offset'i bizde olsun" azaltması yetmiyor, belirsizlik parça içinde de duruyor. Ayrıntı ve çıkış yolu: bölüm 2.5 |
 | **R7** | ASR caption kalitesi kötüyse çeviri de kötü olur | ✅ **KAPANDI.** ASR kaynaklı çeviri VLC'de kontrol edildi ve **hedef kullanıcı takip edebildi** — projenin tek gerçek kabul kriteri. Kalan kusurlar kozmetik: yer yer kelime hatası, cue'ların ~%11'i iki satırı aşıyor, diyalog çizgileri tutarsız |
 | **R8** | Kurulum bir defalık ADB gerektiriyor; `adb tcpip 5555` reboot'ta kalıcı değil | ✅ Doğrulandı. Bu cihazda ayrı "ağ üzerinden hata ayıklama" seçeneği yoktu ama USB hata ayıklama açıkken 5555 zaten dinliyordu. İzin "her zaman" verilince kalıcı |
 | **R9** | **Sağlayıcı modeli emekliye ayırıyor.** `gemini-2.5-flash-lite` yeni key'lere kapatıldı, kod 404 aldı | Model adı yapılandırma değeri, koda gömülü değil. Ayarlarda seçilebilir olacak |

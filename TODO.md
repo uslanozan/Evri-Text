@@ -26,6 +26,9 @@ Kurulum: `cd android; .\gradlew.bat assembleDebug; adb install -r app\build\outp
 - [ ] **Reklam sonrası senkron** — birim testinin yakaladığı hata düzeltildi; gerçek bir reklamlı videoda altyazı reklam sonrası kaymamalı
 - [ ] **Duraklat/devam** — uzun süre duraklatıp devam ettir, altyazı doğru yerden sürmeli
 - [ ] Altyazı konumu ve boyutu (40dp / 22sp) koltuktan rahat mı
+- [ ] **Görsel switch** — ayarlarda anahtar görünüyor mu, odakta net mi, OK ile dönüyor mu
+- [ ] **Hedef dil tespiti** — Türkçe bir video aç, hiçbir şey olmamalı ve sağ üstte "Video zaten Türkçe" çıkmalı
+- [ ] **Hazırlanıyor bildirimi** — yeni bir İngilizce videoda beliriyor, ilk altyazı gelince kayboluyor mu; önbellekteki videoda hiç çıkmamalı
 
 ## Phase 0 — bilinen eksikler (bloke etmiyor)
 
@@ -68,7 +71,12 @@ Kurulum: `cd android; .\gradlew.bat assembleDebug; adb install -r app\build\outp
 - [ ] Ayarlarda "önbelleği temizle" düğmesi + kullanılan alanı göster
 - [ ] Eşleştirme akışı: TV kodunu uygulama içinden girme, auth state'i kalıcı sakla
 - [x] **Aç/kapa anahtarı** — ayarlarda ilk satır, varsayılan kapalı. Kapalıyken overlay çizilmiyor ve çeviri isteği atılmıyor
-- [ ] Kısayolla aç/kapa — kumandadan uygulamaya girmeden. Seçenekler: `MediaSession` üzerinden bir tuş, ya da YouTube'un kullanmadığı bir tuşu `InputManager` ile yakalamak (izin sınırları araştırılmalı)
+- [x] Görsel switch — ayarlarda düz metin yerine `MaterialSwitch`
+- [x] **Hedef dil tespiti** — otomatik Türkçe altyazı varsa video zaten Türkçe demektir, uygulama kendiliğinden duruyor. Kullanıcının kapatmayı hatırlaması gerekmiyor
+- [x] **Durum bildirimleri** — YouTube açıkken sağ üstte: "Altyazı hazırlanıyor" (yalnızca 1,5 sn'den uzun sürerse), "Video zaten Türkçe", "Altyazı yok", "Alınamadı"
+- [ ] **Tek tuşla kısayol — ya `AccessibilityService` ile ya da hiç.** Ana ekrana kısayol koyma denendi ve kaldırıldı: YouTube'dan çıkıp Home'a gidip geri dönmek "tık diye kapatmak" değil, gerekçesini karşılamıyordu. Hedef dil tespiti geldiği için ihtiyacın çoğu zaten ortadan kalktı.
+  YouTube ön plandayken tuş yakalamanın tek desteklenen yolu `AccessibilityService` (`canRequestFilterKeyEvents` + `onKeyEvent`); tuşu öğrenme ekranı izin gerektirmiyor, sadece global dinleme gerektiriyor.
+  **Karar bekliyor:** Play Store erişilebilirlik iznine sert bakıyor, amaç dışı kullanımda uygulamayı kaldırıyor. Bu uygulamanın amacı gerçekten erişilebilirlik — gerekçe yazılabilir ama garanti değil. Mağazaya çıkılmayacaksa risk yok. Önce babanın mevcut haliyle kullanıp ihtiyaç duyup duymadığına bakılacak
 - [ ] Ayarlar ekranı: offset, yeniden çapa aralığı, hedef dil, model seçimi
 - [ ] Servis olarak arka planda çalışma + boot'ta otomatik başlama
 - [ ] Pil/doze davranışı: `deviceidle whitelist` gerekli mi, kullanıcıdan nasıl istenir

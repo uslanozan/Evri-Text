@@ -17,6 +17,7 @@
     <color name="warning">#FFC46B</color>
     <color name="error">#FF9A8F</color>
 
+    <color name="notice_background">#E6171B21</color>
     <color name="subtitle_background">#CC000000</color>
     <color name="subtitle_text">#FFFFFFFF</color>
 </resources>

@@ -58,7 +58,7 @@
              need to touch, and the D-pad lands here on open. -->
         <include
             android:id="@+id/rowEnabled"
-            layout="@layout/item_setting_row" />
+            layout="@layout/item_setting_switch" />
 
         <include
             android:id="@+id/rowApiKey"

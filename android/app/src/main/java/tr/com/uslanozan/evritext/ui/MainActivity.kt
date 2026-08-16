@@ -35,6 +35,8 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         settings = Settings(this)
+        binding.rowEnabled.switchTitle.setText(R.string.setting_enabled)
+        binding.rowEnabled.switchSummary.setText(R.string.setting_enabled_summary)
         binding.rowEnabled.root.setOnClickListener { settings.toggle() }
         binding.rowApiKey.bind(R.string.setting_api_key, getString(R.string.setting_api_key_empty))
         binding.rowTargetLang.bind(R.string.setting_target_lang, "Türkçe")
@@ -59,13 +61,11 @@ class MainActivity : AppCompatActivity() {
             val prediction = tracker?.predict()
 
             val on = settings.enabled.value
-            binding.rowEnabled.bind(
-                R.string.setting_enabled,
-                if (on) getString(R.string.setting_enabled_on) else getString(R.string.setting_enabled_off),
-            )
-            binding.rowEnabled.rowValue.setTextColor(
-                getColor(if (on) R.color.success else R.color.on_surface_variant),
-            )
+            // Driven from the setting rather than from the tap, so the switch is right
+            // even when something else flips it — the shortcut, or another screen.
+            if (binding.rowEnabled.switchToggle.isChecked != on) {
+                binding.rowEnabled.switchToggle.isChecked = on
+            }
 
             binding.statusLine.text = when {
                 !on -> getString(R.string.setting_enabled_hint)

@@ -12,4 +12,7 @@
     <!-- Read from a couch, not a desk. This is the setting most likely to need
          tuning per household, so it becomes a user preference later. -->
     <dimen name="subtitle_text_size">22sp</dimen>
+
+    <!-- Inside the overscan crop, same reasoning as the subtitle margin. -->
+    <dimen name="notice_margin">48dp</dimen>
 </resources>
