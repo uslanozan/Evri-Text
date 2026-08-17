@@ -63,7 +63,17 @@ class EvriService : LifecycleService() {
         lifecycleScope.launch {
             settings.enabled.collect { on ->
                 Log.i(TAG, "subtitles ${if (on) "on" else "off"}")
-                if (!on) overlay?.show(null)
+                if (on) {
+                    session?.start()
+                } else {
+                    // Off has to mean *disconnected*, not merely quiet. YouTube refuses
+                    // to play Shorts while any lounge remote is attached — it thinks a
+                    // phone is casting — and prompts the viewer to disconnect. Staying
+                    // connected with subtitles disabled would break Shorts for someone
+                    // who had already switched us off.
+                    session?.stop()
+                    overlay?.show(null)
+                }
             }
         }
     }
@@ -91,7 +101,8 @@ class EvriService : LifecycleService() {
         val client = LoungeClient(deviceName = DEVICE_NAME).apply { loadAuth(auth) }
         val session = LoungeSession(client, lifecycleScope).also { this.session = it }
         current = session
-        session.start()
+        // Not started here: the enabled flow below owns the connection, so that being
+        // switched off leaves the TV with no remote attached to it at all.
 
         lifecycleScope.launch {
             session.status.collect { status ->

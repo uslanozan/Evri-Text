@@ -166,6 +166,31 @@ class LoungeClient(
     suspend fun getNowPlaying(): Boolean = command("getNowPlaying")
 
     /**
+     * Tells the screen we are leaving, rather than just going quiet.
+     *
+     * Dropping the connection without this leaves YouTube treating us as an attached
+     * remote for a while, and while it thinks a remote is attached it refuses to play
+     * Shorts at all — it asks the viewer to disconnect their phone first. Saying
+     * goodbye properly is what makes switching the app off actually give the TV back.
+     */
+    suspend fun disconnect(): Boolean = withContext(Dispatchers.IO) {
+        if (!connected) return@withContext false
+        val body = FormBody.Builder()
+            .add("ui", "")
+            .add("TYPE", "terminate")
+            .add("clientDisconnectReason", "MDX_SESSION_DISCONNECT_REASON_DISCONNECTED_BY_USER")
+            .build()
+        val url = commonParams("$API_BASE/bc/bind".toHttpUrl().newBuilder())
+            .addQueryParameter("CVER", "1")
+            .addQueryParameter("RID", commandOffset.toString())
+            .addQueryParameter("auth_failure_option", "send_error")
+            .build()
+        val ok = post(url.toString(), body) != null
+        connectionLost()
+        ok
+    }
+
+    /**
      * Turns the screen's autoplay on or off.
      *
      * Needed because merely connecting turns it **on**: the first event the screen

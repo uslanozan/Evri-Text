@@ -29,6 +29,8 @@ Kurulum: `cd android; .\gradlew.bat assembleDebug; adb install -r app\build\outp
 - [ ] **Görsel switch** — ayarlarda anahtar görünüyor mu, odakta net mi, OK ile dönüyor mu
 - [ ] **Hedef dil tespiti** — Türkçe bir video aç, hiçbir şey olmamalı ve sağ üstte "Video zaten Türkçe" çıkmalı
 - [ ] **Hazırlanıyor bildirimi** — yeni bir İngilizce videoda beliriyor, ilk altyazı gelince kayboluyor mu; önbellekteki videoda hiç çıkmamalı
+- [ ] **Shorts** — babanın bildirdiği hata. Altyazı **kapalıyken** Shorts sorunsuz açılmalı ("cihazın bağlantısını kesin" uyarısı çıkmamalı). Açıkken çıkması normal, mimarinin bedeli (R10)
+- [ ] Kapatınca YouTube'un "bağlı cihaz" göstergesi kayboluyor mu — `terminate` gönderimi işe yaradı mı
 
 ## Phase 0 — bilinen eksikler (bloke etmiyor)
 
@@ -76,7 +78,8 @@ Kurulum: `cd android; .\gradlew.bat assembleDebug; adb install -r app\build\outp
 - [x] **Durum bildirimleri** — YouTube açıkken sağ üstte: "Altyazı hazırlanıyor" (yalnızca 1,5 sn'den uzun sürerse), "Video zaten Türkçe", "Altyazı yok", "Alınamadı"
 - [ ] **Tek tuşla kısayol — ya `AccessibilityService` ile ya da hiç.** Ana ekrana kısayol koyma denendi ve kaldırıldı: YouTube'dan çıkıp Home'a gidip geri dönmek "tık diye kapatmak" değil, gerekçesini karşılamıyordu. Hedef dil tespiti geldiği için ihtiyacın çoğu zaten ortadan kalktı.
   YouTube ön plandayken tuş yakalamanın tek desteklenen yolu `AccessibilityService` (`canRequestFilterKeyEvents` + `onKeyEvent`); tuşu öğrenme ekranı izin gerektirmiyor, sadece global dinleme gerektiriyor.
-  **Karar bekliyor:** Play Store erişilebilirlik iznine sert bakıyor, amaç dışı kullanımda uygulamayı kaldırıyor. Bu uygulamanın amacı gerçekten erişilebilirlik — gerekçe yazılabilir ama garanti değil. Mağazaya çıkılmayacaksa risk yok. Önce babanın mevcut haliyle kullanıp ihtiyaç duyup duymadığına bakılacak
+  **Karar bekliyor:** Play Store erişilebilirlik iznine sert bakıyor, amaç dışı kullanımda uygulamayı kaldırıyor. Bu uygulamanın amacı gerçekten erişilebilirlik — gerekçe yazılabilir ama garanti değil. Mağazaya çıkılmayacaksa risk yok.
+  **Gerekçe güçlendi:** Shorts (R10) bağlıyken hiç açılmıyor, yani Shorts'a girmeden önce kapatmak *zorunlu*. Türkçe video meselesi otomatik tespitle çözüldü ama bu çözülemez — kullanıcının hızlı kapatabilmesi gerekiyor
 - [ ] Ayarlar ekranı: offset, yeniden çapa aralığı, hedef dil, model seçimi
 - [ ] Servis olarak arka planda çalışma + boot'ta otomatik başlama
 - [ ] Pil/doze davranışı: `deviceidle whitelist` gerekli mi, kullanıcıdan nasıl istenir

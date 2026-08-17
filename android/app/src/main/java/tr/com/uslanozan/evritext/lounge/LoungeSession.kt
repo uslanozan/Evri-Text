@@ -57,6 +57,10 @@ class LoungeSession(
         subscribeJob = null
         anchorJob = null
         _status.value = Status.DISCONNECTED
+        // Fire-and-forget on a scope that outlives the cancelled jobs: the screen has
+        // to be told, or it keeps treating us as an attached remote and goes on
+        // refusing to play Shorts.
+        scope.launch { runCatching { client.disconnect() } }
     }
 
     private suspend fun subscribeForever() {
