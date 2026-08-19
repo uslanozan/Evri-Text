@@ -33,6 +33,17 @@ import java.util.concurrent.TimeUnit
 class LoungeClient(
     private val deviceName: String,
     private val http: OkHttpClient = defaultHttpClient(),
+    /**
+     * What we tell the screen we can do. We only ever listen, so claiming less is
+     * honest as well as useful.
+     *
+     * The usual string starts with `que`, meaning queue support. Claiming it makes
+     * YouTube treat us as a casting remote that drives a playlist, and that appears to
+     * be what switched the screen's autoplay on by itself and what suppresses the
+     * end-of-video "up next" screen. `dsdtr` is disconnect-on-screen-timeout and `atp`
+     * autoplay; both are queue machinery we never touch either.
+     */
+    private val capabilities: String = LISTEN_ONLY_CAPABILITIES,
 ) {
 
     var auth: AuthState = AuthState()
@@ -99,7 +110,7 @@ class LoungeClient(
             .add("name", deviceName)
             .add("id", auth.screenId!!)
             .add("device", "REMOTE_CONTROL")
-            .add("capabilities", "que,dsdtr,atp,vsp")
+            .add("capabilities", capabilities)
             .add("magnaKey", "cloudPairedDevice")
             .add("ui", "false")
             .add(
@@ -174,7 +185,10 @@ class LoungeClient(
      * goodbye properly is what makes switching the app off actually give the TV back.
      */
     suspend fun disconnect(): Boolean = withContext(Dispatchers.IO) {
-        if (!connected) return@withContext false
+        if (!connected) {
+            Log.i(TAG, "disconnect skipped: already not connected")
+            return@withContext false
+        }
         val body = FormBody.Builder()
             .add("ui", "")
             .add("TYPE", "terminate")
@@ -186,6 +200,7 @@ class LoungeClient(
             .addQueryParameter("auth_failure_option", "send_error")
             .build()
         val ok = post(url.toString(), body) != null
+        Log.i(TAG, "disconnect sent, accepted=$ok")
         connectionLost()
         ok
     }
@@ -379,6 +394,12 @@ class LoungeClient(
     companion object {
         private const val TAG = "LoungeClient"
         const val API_BASE = "https://www.youtube.com/api/lounge"
+
+        /** What every other client sends. Kept for comparison when something breaks. */
+        const val FULL_CAPABILITIES = "que,dsdtr,atp,vsp"
+
+        /** `vsp` alone: video status pings, which is all we actually consume. */
+        const val LISTEN_ONLY_CAPABILITIES = "vsp"
 
         /** `readTimeout = 0` because [subscribe] is meant to sit open for minutes. */
         fun defaultHttpClient(): OkHttpClient = OkHttpClient.Builder()

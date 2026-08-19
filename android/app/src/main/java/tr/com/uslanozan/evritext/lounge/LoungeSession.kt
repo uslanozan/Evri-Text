@@ -25,11 +25,16 @@ class LoungeSession(
     private val scope: CoroutineScope,
     private val reanchorIntervalMs: Long = DEFAULT_REANCHOR_MS,
     /**
-     * Restores the viewer's own autoplay choice, which connecting overrides. Left as a
-     * parameter because someone who actually wants autoplay should be able to keep it
-     * once this reaches the settings screen.
+     * Force the screen's autoplay off after connecting.
+     *
+     * Off by default now. It was a workaround for connecting switching autoplay on by
+     * itself, but it overshot: with autoplay forced off the screen also stops showing
+     * the "up next" screen at the end of a video and drops back to where the viewer
+     * started, which is not what happens without us attached. Not claiming queue
+     * support in the first place should mean there is nothing to correct — if that
+     * turns out to be wrong, this is the switch to turn back on.
      */
-    private val disableAutoplay: Boolean = true,
+    private val disableAutoplay: Boolean = false,
 ) {
 
     val tracker = PositionTracker()
@@ -44,6 +49,13 @@ class LoungeSession(
 
     private var subscribeJob: Job? = null
     private var anchorJob: Job? = null
+
+    /**
+     * Called when the screen ends the session from its side, as opposed to us losing
+     * the channel. The owner decides what that means; this class only refuses to
+     * quietly reconnect over it.
+     */
+    var onScreenDisconnected: (() -> Unit)? = null
 
     fun start() {
         if (subscribeJob != null) return
@@ -131,7 +143,15 @@ class LoungeSession(
             is LoungeEvent.AdState -> tracker.setAdState(event.adState)
             is LoungeEvent.AdPlaying -> tracker.setAdState(event.adState)
             is LoungeEvent.PlaybackSpeed -> tracker.setSpeed(event.speed)
-            is LoungeEvent.ScreenDisconnected -> _status.value = Status.DISCONNECTED
+            is LoungeEvent.ScreenDisconnected -> {
+                // The screen threw us off, which on this TV means one thing: the viewer
+                // pressed "Bağlantıyı kes" on YouTube's own dialog, almost certainly to
+                // get into Shorts. Reconnecting would undo the only lever YouTube gives
+                // them. Treat it as the decision it is and let the owner stand us down.
+                Log.i(TAG, "screen disconnected us — standing down instead of retrying")
+                _status.value = Status.DISCONNECTED
+                onScreenDisconnected?.invoke()
+            }
             is LoungeEvent.Unknown -> Log.d(TAG, "unhandled event ${event.type}: ${event.raw}")
         }
         _lastEvent.value = event

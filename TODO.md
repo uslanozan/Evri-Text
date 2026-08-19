@@ -32,6 +32,37 @@ Kurulum: `cd android; .\gradlew.bat assembleDebug; adb install -r app\build\outp
 - [ ] **Shorts** — babanın bildirdiği hata. Altyazı **kapalıyken** Shorts sorunsuz açılmalı ("cihazın bağlantısını kesin" uyarısı çıkmamalı). Açıkken çıkması normal, mimarinin bedeli (R10)
 - [ ] Kapatınca YouTube'un "bağlı cihaz" göstergesi kayboluyor mu — `terminate` gönderimi işe yaradı mı
 
+## Bağlı olmanın bedelleri (R10) — çözülmeye değer
+
+Cihazda ölçüldü. İkisi de "Lounge oturumu açıkken YouTube bizi yayın yapan bir telefon
+sanıyor" başlığının altında.
+
+**Belirtiler**
+- Shorts hiç açılmıyor: "Cihazın bağlantısını kesin" diyaloğu çıkıyor
+- Video bitince "SIRADAKİ / önerilenler" ekranı gelmiyor, ana sayfaya dönüyor
+  *(bunu `setAutoplayMode` sanmıştık — komut kaldırıldı, ekran yine gelmiyor. Sebep
+  sadece bağlı olmak. Otomatik oynatma ise artık kendiliğinden açılmıyor)*
+
+**Denenen ve işe yaramayan:** `capabilities`'i `vsp`'ye indirmek. Sunucu `que,mus`'u
+kendisi ekliyor — `loungeStatus` olayında kendi kaydımız `"capabilities":"vsp,que,mus"`
+görünüyor. Kuyruk yeteneğini reddetmek mümkün değil.
+
+**Şu anki hafifletme:** ekran bizi attığında ısrar etmiyoruz (YouTube'un kendi
+"Bağlantıyı kes" düğmesi artık gerçekten işe yarıyor, altyazı kendini kapatıyor).
+
+**Denenecek fikirler**
+- [ ] `MediaSessionManager` ile oynatmayı yerelden izle (NotificationListener izni
+      gerekiyor). Süre bilgisi de geliyor: **60 sn'den kısaysa Shorts'tur, hiç bağlanma.**
+      Lounge'a yalnız gerçek video oynarken bağlanmak her iki belirtiyi de büyük ölçüde
+      giderir. Phase 0 preflight'ı `dumpsys media_session` dökümünü tam bu ihtimal için
+      kaydetmişti — `out/dumpsys_media_session.txt`
+- [ ] Yukarıdaki yeterince iyiyse: pozisyonu da oradan almak mümkün mü, Lounge'a hiç
+      gerek kalır mı? Hassasiyeti R1'e karşı ölçülmeli
+- [ ] `AccessibilityService` yolu: Shorts ekranını görüp otomatik çekilmek. Aynı izin
+      tartışması, ama tuş kısayolunu da beraberinde getirir
+- [ ] Oynatma durunca bir süre sonra bağlantıyı bırakmak — tek başına çözmez, çünkü
+      geri bağlanmak için oynatmayı görmek gerekiyor (yumurta-tavuk)
+
 ## Phase 0 — bilinen eksikler (bloke etmiyor)
 
 - [ ] Önbellek anahtarı model adını içermiyor: model değişince eski çıktı HIT dönüyor, elle silmek gerekiyor

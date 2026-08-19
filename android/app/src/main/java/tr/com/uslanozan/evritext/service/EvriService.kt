@@ -101,6 +101,15 @@ class EvriService : LifecycleService() {
         val client = LoungeClient(deviceName = DEVICE_NAME).apply { loadAuth(auth) }
         val session = LoungeSession(client, lifecycleScope).also { this.session = it }
         current = session
+
+        // YouTube's "disconnect" dialog is the one lever a viewer has for getting into
+        // Shorts without leaving the video app, so honour it: switch ourselves off
+        // rather than reconnecting, and say so, or they press it and nothing changes.
+        session.onScreenDisconnected = {
+            Log.i(TAG, "screen disconnected us — switching subtitles off")
+            settings.setEnabled(false)
+            notice.show(getString(R.string.notice_disconnected_by_screen), 4_000)
+        }
         // Not started here: the enabled flow below owns the connection, so that being
         // switched off leaves the TV with no remote attached to it at all.
 

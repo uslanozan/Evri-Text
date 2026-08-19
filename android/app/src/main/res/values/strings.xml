@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Evri-Text</string>
 
@@ -28,4 +28,5 @@
 
     <string name="pairing_title">TV ile eşleştir</string>
     <string name="pairing_hint">YouTube → Ayarlar → \"TV kodu ile bağla\" ekranındaki 12 haneli kodu gir.</string>
+    <string name="notice_disconnected_by_screen">Altyazı kapatıldı — YouTube bağlantıyı kesti</string>
 </resources>
