@@ -15,6 +15,7 @@ import tr.com.uslanozan.evritext.translate.PROMPT_VERSION
 import tr.com.uslanozan.evritext.translate.TranslationContext
 import tr.com.uslanozan.evritext.translate.TranslationProvider
 import java.io.File
+import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.math.abs
 
 /**
@@ -40,7 +41,11 @@ class SubtitleEngine(
         /** A human already wrote subtitles in the target language: do nothing. */
         data class AlreadySubtitled(val languageTag: String) : Result
         data class NoCaptions(val videoId: String) : Result
-        data class Ready(val cues: List<Cue>, val fromCache: Boolean) : Result
+        data class Ready(
+            val cues: List<Cue>,
+            val fromCache: Boolean,
+            val warning: String? = null,
+        ) : Result
         data class Failed(val reason: String) : Result
     }
 
@@ -90,6 +95,7 @@ class SubtitleEngine(
         }
 
         val translated = arrayOfNulls<String>(sentences.size)
+        val failedChunks = ConcurrentLinkedQueue<String>()
         val gate = Semaphore(workers)
 
         coroutineScope {
@@ -119,6 +125,7 @@ class SubtitleEngine(
                             // One bad chunk must not sink the video: fall back to the
                             // source text so the viewer still sees *something* there.
                             Log.e(TAG, "chunk ${range.first} failed: ${error.message}")
+                            failedChunks.add(error.message ?: error.javaClass.simpleName)
                             slice.map { it.text }
                         }
                         result.forEachIndexed { i, text -> translated[range.first + i] = text }
@@ -129,8 +136,15 @@ class SubtitleEngine(
         }
 
         val cues = collect(sentences, translated)
-        if (translated.all { it != null }) writeCache(videoId, cues)
-        return Result.Ready(cues, fromCache = false)
+        if (failedChunks.size == chunks.size) {
+            return Result.Failed("translation failed: ${failedChunks.peek()}")
+        }
+        if (failedChunks.isEmpty()) writeCache(videoId, cues)
+        return Result.Ready(
+            cues,
+            fromCache = false,
+            warning = failedChunks.peek(),
+        )
     }
 
     /** Only the sentences translated so far, in order — the rest simply are not shown. */

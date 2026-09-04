@@ -3,6 +3,7 @@ package tr.com.uslanozan.evritext.ui
 import android.os.Bundle
 import android.text.InputFilter
 import android.text.InputType
+import android.view.View
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Lifecycle
@@ -21,6 +22,12 @@ import tr.com.uslanozan.evritext.lounge.LoungeSession
 import tr.com.uslanozan.evritext.lounge.PairingStore
 import tr.com.uslanozan.evritext.service.EvriService
 import tr.com.uslanozan.evritext.settings.Settings
+import tr.com.uslanozan.evritext.settings.SubtitleAppearance
+import tr.com.uslanozan.evritext.settings.SubtitleBackground
+import tr.com.uslanozan.evritext.settings.SubtitleColor
+import tr.com.uslanozan.evritext.settings.SubtitlePosition
+import tr.com.uslanozan.evritext.settings.SubtitleSize
+import tr.com.uslanozan.evritext.settings.applySubtitleAppearance
 import java.util.Locale
 
 /**
@@ -36,6 +43,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var settings: Settings
     private lateinit var pairingStore: PairingStore
     private var paired = false
+    private var previewAppearance: SubtitleAppearance? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,6 +60,14 @@ class MainActivity : AppCompatActivity() {
         binding.rowPairing.root.setOnClickListener { showPairingDialog() }
         binding.rowApiKey.bind(R.string.setting_api_key, getString(R.string.setting_api_key_empty))
         binding.rowApiKey.root.setOnClickListener { showApiKeyDialog() }
+        binding.rowSubtitleColor.bind(R.string.setting_subtitle_color, "")
+        binding.rowSubtitleColor.root.setOnClickListener { showColorDialog() }
+        binding.rowSubtitleSize.bind(R.string.setting_subtitle_size, "")
+        binding.rowSubtitleSize.root.setOnClickListener { showSizeDialog() }
+        binding.rowSubtitleBackground.bind(R.string.setting_subtitle_background, "")
+        binding.rowSubtitleBackground.root.setOnClickListener { showBackgroundDialog() }
+        binding.rowSubtitlePosition.bind(R.string.setting_subtitle_position, "")
+        binding.rowSubtitlePosition.root.setOnClickListener { showPositionDialog() }
         binding.rowTargetLang.bind(R.string.setting_target_lang, "Türkçe")
         binding.rowModel.bind(R.string.setting_model, "gemini-3.5-flash-lite")
         binding.rowOffset.bind(R.string.setting_offset, "0,0 sn")
@@ -75,6 +91,7 @@ class MainActivity : AppCompatActivity() {
 
             val on = settings.enabled.value
             val hasApiKey = settings.apiKey.value != null
+            val appearance = settings.subtitleAppearance()
             // Driven from the setting rather than from the tap, so the switch is right
             // even when something else flips it — the shortcut, or another screen.
             if (binding.rowEnabled.switchToggle.isChecked != on) {
@@ -87,6 +104,14 @@ class MainActivity : AppCompatActivity() {
             binding.rowPairing.rowValue.setText(
                 if (paired) R.string.setting_pairing_set else R.string.setting_pairing_empty,
             )
+            binding.rowSubtitleColor.rowValue.setText(colorLabel(appearance.color))
+            binding.rowSubtitleSize.rowValue.setText(sizeLabel(appearance.size))
+            binding.rowSubtitleBackground.rowValue.setText(backgroundLabel(appearance.background))
+            binding.rowSubtitlePosition.rowValue.setText(positionLabel(appearance.position))
+            if (appearance != previewAppearance) {
+                binding.subtitlePreview.applySubtitleAppearance(appearance)
+                previewAppearance = appearance
+            }
 
             binding.statusLine.text = when {
                 !on -> getString(R.string.setting_enabled_hint)
@@ -121,6 +146,94 @@ class MainActivity : AppCompatActivity() {
             }
             delay(200)
         }
+    }
+
+    private fun showColorDialog() {
+        val values = SubtitleColor.entries
+        showChoiceDialog(
+            R.string.setting_subtitle_color,
+            values.map(::colorLabel),
+            values.indexOf(settings.subtitleColor.value),
+            binding.rowSubtitleColor.root,
+        ) { settings.setSubtitleColor(values[it]) }
+    }
+
+    private fun showSizeDialog() {
+        val values = SubtitleSize.entries
+        showChoiceDialog(
+            R.string.setting_subtitle_size,
+            values.map(::sizeLabel),
+            values.indexOf(settings.subtitleSize.value),
+            binding.rowSubtitleSize.root,
+        ) { settings.setSubtitleSize(values[it]) }
+    }
+
+    private fun showBackgroundDialog() {
+        val values = SubtitleBackground.entries
+        showChoiceDialog(
+            R.string.setting_subtitle_background,
+            values.map(::backgroundLabel),
+            values.indexOf(settings.subtitleBackground.value),
+            binding.rowSubtitleBackground.root,
+        ) { settings.setSubtitleBackground(values[it]) }
+    }
+
+    private fun showPositionDialog() {
+        val values = SubtitlePosition.entries
+        showChoiceDialog(
+            R.string.setting_subtitle_position,
+            values.map(::positionLabel),
+            values.indexOf(settings.subtitlePosition.value),
+            binding.rowSubtitlePosition.root,
+        ) { settings.setSubtitlePosition(values[it]) }
+    }
+
+    private fun showChoiceDialog(
+        titleRes: Int,
+        labelResources: List<Int>,
+        selected: Int,
+        focusAfter: View,
+        onSelected: (Int) -> Unit,
+    ) {
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setTitle(titleRes)
+            .setSingleChoiceItems(
+                labelResources.map(::getString).toTypedArray(),
+                selected,
+            ) { openDialog, which ->
+                onSelected(which)
+                openDialog.dismiss()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .create()
+        dialog.setOnDismissListener { focusAfter.requestFocus() }
+        dialog.show()
+    }
+
+    private fun colorLabel(value: SubtitleColor) = when (value) {
+        SubtitleColor.WHITE -> R.string.subtitle_color_white
+        SubtitleColor.YELLOW -> R.string.subtitle_color_yellow
+        SubtitleColor.CYAN -> R.string.subtitle_color_cyan
+    }
+
+    private fun sizeLabel(value: SubtitleSize) = when (value) {
+        SubtitleSize.SMALL -> R.string.subtitle_size_small
+        SubtitleSize.MEDIUM -> R.string.subtitle_size_medium
+        SubtitleSize.LARGE -> R.string.subtitle_size_large
+        SubtitleSize.EXTRA_LARGE -> R.string.subtitle_size_extra_large
+    }
+
+    private fun backgroundLabel(value: SubtitleBackground) = when (value) {
+        SubtitleBackground.OFF -> R.string.subtitle_background_off
+        SubtitleBackground.LIGHT -> R.string.subtitle_background_light
+        SubtitleBackground.NORMAL -> R.string.subtitle_background_normal
+        SubtitleBackground.DARK -> R.string.subtitle_background_dark
+    }
+
+    private fun positionLabel(value: SubtitlePosition) = when (value) {
+        SubtitlePosition.BOTTOM -> R.string.subtitle_position_bottom
+        SubtitlePosition.RAISED -> R.string.subtitle_position_raised
+        SubtitlePosition.HIGH -> R.string.subtitle_position_high
     }
 
     private fun showPairingDialog() {

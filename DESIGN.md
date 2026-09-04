@@ -372,6 +372,13 @@ Teknik riskler kapandığı için kalan sıra kullanıcı deneyimine göredir:
 9. **R10 azaltması** — MediaSession ile Lounge bağlantısını yalnız gerektiğinde açmayı dene
 10. **Açık kaynak yayını** — README, lisans kontrolü ve imzalı APK
 
+Görsel deneyimin ilk dilimi tamamlandı: üç yazı rengi, dört yazı boyutu, dört siyah
+arka plan opaklığı ve üç dikey konum seçeneği var. Ayar ekranındaki örnek metin renk,
+boyut ve arka planı anında gösteriyor; çalışan overlay aynı `Settings` kaynağını her
+çizimde okuyarak uygulama yeniden başlamadan güncelleniyor. Ağ, API yetkilendirme,
+kota, caption indirme ve kısmi çeviri hataları da ayrı kullanıcı mesajlarına çevrildi.
+Başarısız çeviri parçaları artık disk önbelleğine yazılmıyor.
+
 ### Phase 2 — STT fallback *(ertelendi)*
 
 Taramada hiçbir video STT gerektirmedi. Gerekirse: videoId → NewPipeExtractor ile ses akışı → 30–60 sn parçalama → `GeminiSttProvider` (bölüm 2.4).

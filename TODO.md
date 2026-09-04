@@ -45,9 +45,9 @@ Kurulum sihirbazı, geniş cihaz matrisi ve CI şu an hedef değil.
 
 ### Ayarlar
 
-- [ ] Altyazı görünümü ayarlanabilir olsun: yazı rengi, yazı boyutu, alttan boşluk,
-  arka plan rengi/opaklığı, gölge ve maksimum genişlik. Hazır temalar ve canlı önizleme
-  ekle. Şu an `dimens.xml`'de sabit (22sp / 40dp)
+- [~] Altyazı görünümü: beyaz/sarı/turkuaz yazı, 4 boyut, 4 arka plan seviyesi,
+  3 dikey konum ve canlı önizleme tamamlandı; gerçek video üstünde toplu cihaz testi
+  bekliyor. Özel renk, gölge ve maksimum genişlik ayarı daha sonra eklenebilir
 - [ ] Offset (altyazı gecikmesi), yeniden çapa aralığı, hedef dil, model seçimi
 - [ ] "Önbelleği temizle" düğmesi + kullanılan alanı göster
 
@@ -74,8 +74,8 @@ Kurulum sihirbazı, geniş cihaz matrisi ve CI şu an hedef değil.
 - [ ] Video değişince eski altyazıyı hemen temizle; sarma ve hızlı video değişiminde
   artık gerekmeyen çeviri işlerinin iptal edildiğini kullanıcı akışında doğrula
 - [ ] Overlay'i yalnız metin değiştiğinde güncelleme mevcut; geçişlerde titreme ve boşlukları ölç
-- [ ] Hazırlanıyor/çeviriliyor durumuna ilerleme bilgisi ekle; ağ, API anahtarı, kota ve
-  caption hatalarını kullanıcıya ayrı ve eyleme dönük mesajlarla göster
+- [~] Ağ, geçersiz API anahtarı, kota, caption ve kısmi çeviri hataları ayrı ve eyleme
+  dönük mesajlara ayrıldı. Hazırlanıyor/çeviriliyor durumuna sayısal ilerleme bekliyor
 - [ ] Cue'ların ~%11'i 2 satırı aşıyor
 - [ ] Diyalog çizgileri tutarsız — model gerekli yerlerin hepsinde koymuyor, `3.6-flash` daha iyi ama 5 kat yavaş
 - [ ] ASR yanlış duymaları çeviriye sızıyor; büyük model kısmen düzeltiyor
@@ -124,6 +124,10 @@ geri gelmedi (yani sorunun sebebi o değilmiş) ve önerilenler ekranı da geri 
 
 - [ ] **Toplu ayar testi** — TV kodu gir/değiştir/kaldır; API anahtarı gir/değiştir/kaldır;
   uygulamayı kapatıp açınca ikisinin de korunduğunu ve servisin anında yenilendiğini doğrula
+- [ ] **Toplu görünüm testi** — üç renk, dört boyut, arka plan kapalı/koyu ve üç konumun
+  hem önizlemede hem YouTube overlay'inde anında ve okunaklı değiştiğini doğrula
+- [ ] **Toplu hata testi** — yanlış API anahtarı ve internet kapalıyken doğru mesajın
+  çıktığını; başarısız çevirinin önbelleğe yazılmadığını doğrula
 - [ ] **"Bağlantıyı kes" düğmesi** — Shorts diyaloğunda basınca Shorts açılmalı, biz geri bağlanmamalıyız, anahtar kendiliğinden kapanmalı, sağ üstte bildirim çıkmalı *(kod hazır, kurulu, test edilmedi)*
 - [ ] Reklam sonrası senkron — birim testinin yakaladığı hata düzeltildi, gerçek reklamlı videoda görülmedi
 - [ ] Duraklat/devam — uzun duraklamadan sonra doğru yerden sürüyor mu

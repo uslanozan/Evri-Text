@@ -54,6 +54,23 @@
             android:text="@string/settings_title"
             android:textAppearance="@style/TextAppearance.EvriText.Section" />
 
+        <TextView
+            android:id="@+id/subtitlePreview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="16dp"
+            android:gravity="center"
+            android:maxLines="2"
+            android:paddingStart="20dp"
+            android:paddingTop="10dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="10dp"
+            android:text="@string/subtitle_preview_text"
+            android:textColor="@color/subtitle_text"
+            android:textSize="@dimen/subtitle_text_size" />
+
         <!-- First row on purpose: it is the one thing anyone in the house will ever
              need to touch, and the D-pad lands here on open. -->
         <include
@@ -66,6 +83,22 @@
 
         <include
             android:id="@+id/rowApiKey"
+            layout="@layout/item_setting_row" />
+
+        <include
+            android:id="@+id/rowSubtitleColor"
+            layout="@layout/item_setting_row" />
+
+        <include
+            android:id="@+id/rowSubtitleSize"
+            layout="@layout/item_setting_row" />
+
+        <include
+            android:id="@+id/rowSubtitleBackground"
+            layout="@layout/item_setting_row" />
+
+        <include
+            android:id="@+id/rowSubtitlePosition"
             layout="@layout/item_setting_row" />
 
         <include

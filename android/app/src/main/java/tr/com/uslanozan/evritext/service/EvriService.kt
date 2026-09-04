@@ -253,6 +253,9 @@ class EvriService : LifecycleService() {
                         "${System.currentTimeMillis() - started}ms " +
                         if (result.fromCache) "(cache)" else "(fresh)",
                 )
+                if (result.warning != null) {
+                    notice.show(getString(R.string.notice_translation_partial), 5_000)
+                }
             }
 
             is SubtitleEngine.Result.AlreadySubtitled -> {
@@ -267,9 +270,27 @@ class EvriService : LifecycleService() {
 
             is SubtitleEngine.Result.Failed -> {
                 Log.e(TAG, "$videoId failed: ${result.reason}")
-                notice.show(getString(R.string.notice_failed))
+                cues = emptyList()
+                notice.show(failureMessage(result.reason), 5_000)
             }
         }
+    }
+
+    private fun failureMessage(reason: String): String {
+        val message = reason.lowercase(Locale.ROOT)
+        val resource = when {
+            "429" in message || "resource_exhausted" in message -> R.string.notice_quota_failed
+            "translation failed" in message && (
+                "401" in message || "403" in message || "api_key" in message ||
+                    "permission_denied" in message
+                ) -> R.string.notice_api_key_failed
+            "timeout" in message || "unable to resolve" in message ||
+                "failed to connect" in message || "network" in message ->
+                R.string.notice_network_failed
+            "caption" in message -> R.string.notice_caption_failed
+            else -> R.string.notice_failed
+        }
+        return getString(resource)
     }
 
 
@@ -281,7 +302,7 @@ class EvriService : LifecycleService() {
      * fullscreen YouTube, subtitles are only a matter of swapping the string.
      */
     private fun startOverlay(session: LoungeSession) {
-        val overlay = SubtitleOverlay(this).also { this.overlay = it }
+        val overlay = SubtitleOverlay(this, settings).also { this.overlay = it }
         if (!overlay.attach()) {
             updateNotification("Overlay izni yok")
             return
