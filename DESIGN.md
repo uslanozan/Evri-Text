@@ -217,6 +217,13 @@ Bizim üç adımımız:
 
 Sağlayıcı ve API key runtime'da değiştirilebilir. Phase 0'daki Python modülleri (`phase0/evri/`) bu arayüzleri birebir yansıtıyor — Kotlin portu doğrudan çeviri olacak.
 
+Dağıtım modeli **BYOK**'tur (kullanıcı kendi anahtarını getirir). Açık kaynak APK'ya
+ortak bir anahtar gömülmez. Anahtar TV arayüzünden girilir, değeri UI'da geri
+gösterilmez ve Android Keystore tarafından korunan AES-GCM şifreli veri olarak
+saklanır. Eski geliştirme kurulumlarındaki `gemini_api_key.txt` yalnız geriye
+uyumluluk için okunur; kullanıcı anahtarı UI'dan yönettiği anda dosya fallback'i
+devre dışı kalır.
+
 ```kotlin
 data class Cue(val startMs: Long, val endMs: Long, val text: String)
 
@@ -346,29 +353,30 @@ Elde edilenler:
 
 ### Phase 1 — Android uygulaması, çeviri yolu ← **şu an burada**
 
-Sıralama riske göre: **R3 (Lounge'ın Kotlin portu) tek gerçek belirsizlik**, önce o doğrulanıyor. Geri kalanı Python'dan büyük ölçüde mekanik çeviri.
+Teknik riskler kapandığı için kalan sıra kullanıcı deneyimine göredir:
 
 1. ✅ **Proje iskeleti** — `android/`, tek modül, minSdk 28 / target 35
 2. ✅ **İlk dikey dilim: pozisyon takipçisi.** `LoungeClient` + `PositionTracker` + foreground service. **R3 kapandı.**
    Buradan çıkan mimari kural: **oturum Activity'de yaşayamaz.** YouTube öne geldiği anda Android bizim Activity'mizi yok ediyor ve takip ölüyor. Süreç hayatta kalıyor ama coroutine'ler iptal oluyor. Servis zorunlu, ekran yalnızca bir ayar paneli.
-3. **Eşleştirme akışı** — TV kodu girişi, auth state kalıcı saklama
-   *(şimdilik Phase 0'ın `lounge_auth.json`'ı `adb push` ile taşınıyor)*
+3. 🟡 **ADB'siz kimlik bilgileri** — API anahtarı UI'sı ve Keystore saklama
+   tamamlandı; anahtarı doğrulama/QR kolaylığı ve TV koduyla Lounge eşleştirmesi sırada
 4. ✅ **`SubtitleOverlay`** — `TYPE_APPLICATION_OVERLAY`, alt-orta, cihazda YouTube üstünde doğrulandı
 5. ✅ **Caption + çeviri hattı portu** — NewPipeExtractor + `evri` modüllerinin portu, kademeli çeviriyle.
    Cihazda uçtan uca çalışıyor: **ilk altyazı 8,5 saniyede** (Phase 0'da 89 sn), tam video 19 saniyede.
    Ayrıştırma ve cümle birleştirme Python'la birebir aynı sonucu veriyor — parity testiyle sabitlendi.
-6. **Ayarlar** — API key (`EncryptedSharedPreferences`), dil, model, offset, altyazı görünümü, önbellek yönetimi
-   *(şimdilik key ve eşleştirme `adb push` ile dosya olarak duruyor)*
-7. **Eşleştirme ekranı** — TV kodu girişi
-8. Servis boot'ta başlasın, kullanıcı ayarından açılıp kapansın
+6. **Görsel deneyim** — renk, boyut, arka plan, konum, hazır temalar ve canlı önizleme
+7. **Akıcılık ve geri bildirim** — video/sarma geçişleri, ilerleme ve eyleme dönük hata mesajları
+8. **Günlük kullanım** — hızlı aç/kapa, offset/dil/model ayarları ve önbellek kontrolü
+9. **R10 azaltması** — MediaSession ile Lounge bağlantısını yalnız gerektiğinde açmayı dene
+10. **Açık kaynak yayını** — README, lisans kontrolü ve imzalı APK
 
 ### Phase 2 — STT fallback *(ertelendi)*
 
 Taramada hiçbir video STT gerektirmedi. Gerekirse: videoId → NewPipeExtractor ile ses akışı → 30–60 sn parçalama → `GeminiSttProvider` (bölüm 2.4).
 
-### Phase 3 — Cilalama
+### Phase 3 — İsteğe bağlı genişleme
 
-Disk önbelleği + LRU, ek provider'lar, altyazı stili, reklam yönetimi (R5), Türkçe hata mesajları.
+Ek provider'lar, reklam yönetimi (R5), boot davranışı ve mağaza hazırlığı.
 
 ---
 

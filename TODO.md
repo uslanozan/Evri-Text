@@ -9,8 +9,27 @@ Phase 0 kapandı. Phase 1'in gövdesi çalışıyor: uygulama Mi Box'ta kendi ba
 YouTube'u dinliyor, altyazıyı çekiyor, çeviriyor, ekrana basıyor. Kalan işler
 ürünleştirme — riskli bir bilinmeyen yok.
 
-**Uygulamayı bir başkasının kurmasını engelleyen iki şey:** eşleştirme ve API anahtarı
-hâlâ `adb push` ile dosya olarak duruyor.
+**Uygulamayı bir başkasının kurmasını engelleyen ana konu:** Lounge eşleştirmesi
+hâlâ `adb push` ile dosya olarak duruyor. API anahtarı artık uygulamadan girilebiliyor;
+overlay izninin cihazdan cihaza değişen akışı da açık kaynak kurulum notlarında
+açıklanmalı.
+
+## Kullanıcı odaklı uygulama sırası
+
+Mağaza hazırlığı değil, günlük kullanım ve açık kaynak yayın öncelikli. Sıra:
+
+1. **ADB'siz kullanım:** uygulama içinden API anahtarı ve TV kodu girişi
+2. **Altyazı görünümü:** renk, boyut, arka plan, konum ve canlı önizleme
+3. **Akıcılık:** sarma/video değişiminde doğru iptal, daha hızlı algılanan başlangıç,
+   gereksiz overlay güncellemelerini önleme
+4. **Anlaşılır durumlar:** teknik hata yerine neden + kullanıcının yapacağı işlem
+5. **Hızlı aç/kapa:** önce izinsiz seçenekler; AccessibilityService yalnız isteğe bağlı
+6. **Kullanışlı ayarlar:** offset, hedef dil, model ve çeviri üslubu
+7. **Önbellek kontrolü:** kullanılan alan, temizleme ve boyut sınırı
+8. **R10/Shorts deneyi:** MediaSession ile Lounge'a yalnız gerektiğinde bağlanma
+9. **Açık kaynak yayını:** README, ekran görüntüleri, lisanslar, imzalı APK
+
+Kurulum sihirbazı, geniş cihaz matrisi ve CI şu an hedef değil.
 
 ---
 
@@ -19,12 +38,16 @@ hâlâ `adb push` ile dosya olarak duruyor.
 ### Kurulabilirlik (en kritik)
 
 - [ ] **Eşleştirme ekranı** — TV kodunu kumandayla girme, auth state'i kalıcı saklama
-- [ ] **API anahtarı ayarı** — `EncryptedSharedPreferences`, `adb push` bağımlılığı kalksın
+- [~] **API anahtarı ayarı** — TV arayüzünden ekleme/kaldırma ve Android Keystore ile
+  şifreli saklama tamamlandı; anahtarı kaydetmeden doğrulama ve QR bağlantısı bekliyor.
+  Eski `adb push` dosyası geçiş uyumluluğu için okunuyor
 - [ ] Overlay izni akışı: Android TV'de `MANAGE_OVERLAY_PERMISSION` ekranı yok, kullanıcıya ne söyleyeceğiz
 
 ### Ayarlar
 
-- [ ] Altyazı görünümü ayarlanabilir olsun: yazı boyutu, alttan boşluk, arka plan opaklığı, maksimum genişlik. Şu an `dimens.xml`'de sabit (22sp / 40dp), doğru değer TV'nin overscan miktarına göre değişiyor
+- [ ] Altyazı görünümü ayarlanabilir olsun: yazı rengi, yazı boyutu, alttan boşluk,
+  arka plan rengi/opaklığı, gölge ve maksimum genişlik. Hazır temalar ve canlı önizleme
+  ekle. Şu an `dimens.xml`'de sabit (22sp / 40dp)
 - [ ] Offset (altyazı gecikmesi), yeniden çapa aralığı, hedef dil, model seçimi
 - [ ] "Önbelleği temizle" düğmesi + kullanılan alanı göster
 
@@ -48,6 +71,11 @@ hâlâ `adb push` ile dosya olarak duruyor.
 
 ### Kalite
 
+- [ ] Video değişince eski altyazıyı hemen temizle; sarma ve hızlı video değişiminde
+  artık gerekmeyen çeviri işlerinin iptal edildiğini kullanıcı akışında doğrula
+- [ ] Overlay'i yalnız metin değiştiğinde güncelleme mevcut; geçişlerde titreme ve boşlukları ölç
+- [ ] Hazırlanıyor/çeviriliyor durumuna ilerleme bilgisi ekle; ağ, API anahtarı, kota ve
+  caption hatalarını kullanıcıya ayrı ve eyleme dönük mesajlarla göster
 - [ ] Cue'ların ~%11'i 2 satırı aşıyor
 - [ ] Diyalog çizgileri tutarsız — model gerekli yerlerin hepsinde koymuyor, `3.6-flash` daha iyi ama 5 kat yavaş
 - [ ] ASR yanlış duymaları çeviriye sızıyor; büyük model kısmen düzeltiyor

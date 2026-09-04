@@ -151,20 +151,26 @@ class EvriService : LifecycleService() {
      * is waiting on subtitles for a video they already left.
      */
     private fun startSubtitles(session: LoungeSession) {
-        val apiKey = File(filesDir, API_KEY_FILE).takeIf { it.exists() }?.readText()?.trim()
-        if (apiKey.isNullOrEmpty()) {
-            Log.e(TAG, "no API key at files/$API_KEY_FILE")
-            updateNotification("API anahtarı yok")
-            return
-        }
-        val engine = SubtitleEngine(
-            provider = GeminiTranslationProvider(apiKey),
-            cacheDir = File(cacheDir, "subs"),
-        )
-
         lifecycleScope.launch {
             var job: Job? = null
+            var activeApiKey: String? = null
+            var engine: SubtitleEngine? = null
             while (currentCoroutineContext().isActive) {
+                val apiKey = settings.apiKey.value
+                if (apiKey != activeApiKey) {
+                    job?.cancel()
+                    job = null
+                    cues = emptyList()
+                    builtVideoId = null
+                    activeApiKey = apiKey
+                    engine = apiKey?.let {
+                        SubtitleEngine(
+                            provider = GeminiTranslationProvider(it),
+                            cacheDir = File(cacheDir, "subs"),
+                        )
+                    }
+                    updateNotification(if (apiKey == null) "API anahtarı gerekli" else "Hazır")
+                }
                 if (!settings.enabled.value) {
                     // Switching off cancels an in-flight build but keeps whatever is
                     // already translated. Discarding it would mean paying for the same
@@ -175,15 +181,20 @@ class EvriService : LifecycleService() {
                     delay(500)
                     continue
                 }
+                val activeEngine = engine
+                if (activeEngine == null) {
+                    delay(500)
+                    continue
+                }
                 val videoId = session.tracker.videoId
                 if (videoId != null && videoId != builtVideoId) {
                     builtVideoId = videoId
                     cues = emptyList()
-                    job = launch { buildFor(engine, session, videoId) }
+                    job = launch { buildFor(activeEngine, session, videoId) }
                 } else if (videoId != null && job == null && cues.isEmpty()) {
                     // Same video, but the previous build was cancelled before it
                     // produced anything. Pick it back up.
-                    job = launch { buildFor(engine, session, videoId) }
+                    job = launch { buildFor(activeEngine, session, videoId) }
                 }
                 delay(500)
             }
@@ -334,8 +345,6 @@ class EvriService : LifecycleService() {
         private const val PROBE_TAG = "Probe"
         private const val AUTH_FILE = "lounge_auth.json"
 
-        /** Pushed with adb until the settings screen can store it properly. */
-        private const val API_KEY_FILE = "gemini_api_key.txt"
         private const val DEVICE_NAME = "Evri-Text"
         private const val CHANNEL_ID = "evritext.session"
         private const val NOTIFICATION_ID = 1

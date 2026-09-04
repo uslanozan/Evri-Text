@@ -6,6 +6,7 @@
     <string name="status_not_connected">Bağlı değil</string>
     <string name="status_connecting">Bağlanıyor…</string>
     <string name="status_connected">Bağlı</string>
+    <string name="status_api_key_required">API anahtarı gerekli</string>
 
     <string name="settings_title">Ayarlar</string>
     <string name="setting_enabled">Altyazı</string>
@@ -21,6 +22,13 @@
     <string name="notice_failed">Altyazı alınamadı</string>
     <string name="setting_api_key">API anahtarı</string>
     <string name="setting_api_key_empty">Ayarlanmadı</string>
+    <string name="setting_api_key_set">Ayarlı</string>
+    <string name="api_key_dialog_title">Gemini API anahtarı</string>
+    <string name="api_key_dialog_message">Anahtar yalnızca bu cihazda şifreli olarak saklanır ve çeviri isteklerinde kullanılır.</string>
+    <string name="api_key_input_hint">API anahtarını girin</string>
+    <string name="api_key_required">Bir API anahtarı girin</string>
+    <string name="action_save">Kaydet</string>
+    <string name="action_remove">Kaldır</string>
     <string name="setting_target_lang">Hedef dil</string>
     <string name="setting_model">Model</string>
     <string name="setting_offset">Altyazı gecikmesi</string>

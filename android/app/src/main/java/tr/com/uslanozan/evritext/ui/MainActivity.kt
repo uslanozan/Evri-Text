@@ -1,6 +1,8 @@
 package tr.com.uslanozan.evritext.ui
 
 import android.os.Bundle
+import android.text.InputType
+import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -9,6 +11,7 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import tr.com.uslanozan.evritext.R
 import tr.com.uslanozan.evritext.databinding.ActivityMainBinding
 import tr.com.uslanozan.evritext.databinding.ItemSettingRowBinding
@@ -39,6 +42,7 @@ class MainActivity : AppCompatActivity() {
         binding.rowEnabled.switchSummary.setText(R.string.setting_enabled_summary)
         binding.rowEnabled.root.setOnClickListener { settings.toggle() }
         binding.rowApiKey.bind(R.string.setting_api_key, getString(R.string.setting_api_key_empty))
+        binding.rowApiKey.root.setOnClickListener { showApiKeyDialog() }
         binding.rowTargetLang.bind(R.string.setting_target_lang, "Türkçe")
         binding.rowModel.bind(R.string.setting_model, "gemini-3.5-flash-lite")
         binding.rowOffset.bind(R.string.setting_offset, "0,0 sn")
@@ -61,14 +65,20 @@ class MainActivity : AppCompatActivity() {
             val prediction = tracker?.predict()
 
             val on = settings.enabled.value
+            val hasApiKey = settings.apiKey.value != null
             // Driven from the setting rather than from the tap, so the switch is right
             // even when something else flips it — the shortcut, or another screen.
             if (binding.rowEnabled.switchToggle.isChecked != on) {
                 binding.rowEnabled.switchToggle.isChecked = on
             }
 
+            binding.rowApiKey.rowValue.setText(
+                if (hasApiKey) R.string.setting_api_key_set else R.string.setting_api_key_empty,
+            )
+
             binding.statusLine.text = when {
                 !on -> getString(R.string.setting_enabled_hint)
+                !hasApiKey -> getString(R.string.status_api_key_required)
                 session?.status?.value == LoungeSession.Status.CONNECTED ->
                     getString(R.string.status_connected)
                 session?.status?.value == LoungeSession.Status.CONNECTING ->
@@ -98,6 +108,44 @@ class MainActivity : AppCompatActivity() {
             }
             delay(200)
         }
+    }
+
+    private fun showApiKeyDialog() {
+        val input = EditText(this).apply {
+            setSingleLine()
+            hint = getString(R.string.api_key_input_hint)
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+        }
+        val builder = MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.api_key_dialog_title)
+            .setMessage(R.string.api_key_dialog_message)
+            .setView(input)
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton(R.string.action_save, null)
+
+        if (settings.apiKey.value != null) {
+            builder.setNeutralButton(R.string.action_remove, null)
+        }
+
+        val dialog = builder.create()
+        dialog.setOnShowListener {
+            dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val value = input.text?.toString()?.trim().orEmpty()
+                if (value.isEmpty()) {
+                    input.error = getString(R.string.api_key_required)
+                } else {
+                    settings.setApiKey(value)
+                    dialog.dismiss()
+                }
+            }
+            dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEUTRAL)?.setOnClickListener {
+                settings.clearApiKey()
+                dialog.dismiss()
+            }
+        }
+        dialog.setOnDismissListener { binding.rowApiKey.root.requestFocus() }
+        dialog.show()
+        input.requestFocus()
     }
 
     private fun formatSeconds(total: Double): String {
