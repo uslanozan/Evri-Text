@@ -14,6 +14,9 @@
     <string name="setting_enabled_off">Kapalı</string>
     <string name="setting_enabled_hint">Açmak için OK tuşuna bas</string>
     <string name="setting_enabled_summary">YouTube videolarına Türkçe altyazı bindirilir</string>
+    <string name="setting_pairing">YouTube TV eşleştirmesi</string>
+    <string name="setting_pairing_set">Eşleştirildi</string>
+    <string name="setting_pairing_empty">Eşleştirilmedi</string>
 
     <!-- Shown over YouTube, where the settings screen is not visible to explain itself. -->
     <string name="notice_preparing">Altyazı hazırlanıyor…</string>
@@ -36,5 +39,14 @@
 
     <string name="pairing_title">TV ile eşleştir</string>
     <string name="pairing_hint">YouTube → Ayarlar → \"TV kodu ile bağla\" ekranındaki 12 haneli kodu gir.</string>
+    <string name="pairing_input_hint">12 haneli TV kodu</string>
+    <string name="pairing_code_invalid">Kod 12 haneli olmalı</string>
+    <string name="pairing_in_progress">Eşleştiriliyor…</string>
+    <string name="pairing_failed">Eşleştirme başarısız. Kodun süresi dolmuş olabilir; YouTube’dan yeni kod alıp tekrar deneyin.</string>
+    <string name="pairing_save_failed">Eşleştirme yapıldı fakat cihazda saklanamadı.</string>
+    <string name="pairing_remove_title">Eşleştirme kaldırılsın mı?</string>
+    <string name="pairing_remove_message">Altyazıları yeniden kullanmak için yeni bir TV kodu girmeniz gerekir.</string>
+    <string name="action_pair">Eşleştir</string>
+    <string name="action_retry">Tekrar dene</string>
     <string name="notice_disconnected_by_screen">Altyazı kapatıldı — YouTube bağlantıyı kesti</string>
 </resources>

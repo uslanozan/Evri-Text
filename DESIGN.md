@@ -358,8 +358,10 @@ Teknik riskler kapandığı için kalan sıra kullanıcı deneyimine göredir:
 1. ✅ **Proje iskeleti** — `android/`, tek modül, minSdk 28 / target 35
 2. ✅ **İlk dikey dilim: pozisyon takipçisi.** `LoungeClient` + `PositionTracker` + foreground service. **R3 kapandı.**
    Buradan çıkan mimari kural: **oturum Activity'de yaşayamaz.** YouTube öne geldiği anda Android bizim Activity'mizi yok ediyor ve takip ölüyor. Süreç hayatta kalıyor ama coroutine'ler iptal oluyor. Servis zorunlu, ekran yalnızca bir ayar paneli.
-3. 🟡 **ADB'siz kimlik bilgileri** — API anahtarı UI'sı ve Keystore saklama
-   tamamlandı; anahtarı doğrulama/QR kolaylığı ve TV koduyla Lounge eşleştirmesi sırada
+3. 🟡 **ADB'siz kimlik bilgileri** — API anahtarı UI'sı/Keystore saklama ve TV koduyla
+   Lounge eşleştirmesi tamamlandı, toplu cihaz testi bekliyor. Eşleştirme değişince
+   servis eski oturum döngülerini iptal edip yeni auth ile yerinde yeniden kuruluyor.
+   Anahtarı kaydetmeden doğrulama ve QR kolaylığı sonraki iyileştirme
 4. ✅ **`SubtitleOverlay`** — `TYPE_APPLICATION_OVERLAY`, alt-orta, cihazda YouTube üstünde doğrulandı
 5. ✅ **Caption + çeviri hattı portu** — NewPipeExtractor + `evri` modüllerinin portu, kademeli çeviriyle.
    Cihazda uçtan uca çalışıyor: **ilk altyazı 8,5 saniyede** (Phase 0'da 89 sn), tam video 19 saniyede.

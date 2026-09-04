@@ -9,10 +9,9 @@ Phase 0 kapandı. Phase 1'in gövdesi çalışıyor: uygulama Mi Box'ta kendi ba
 YouTube'u dinliyor, altyazıyı çekiyor, çeviriyor, ekrana basıyor. Kalan işler
 ürünleştirme — riskli bir bilinmeyen yok.
 
-**Uygulamayı bir başkasının kurmasını engelleyen ana konu:** Lounge eşleştirmesi
-hâlâ `adb push` ile dosya olarak duruyor. API anahtarı artık uygulamadan girilebiliyor;
-overlay izninin cihazdan cihaza değişen akışı da açık kaynak kurulum notlarında
-açıklanmalı.
+API anahtarı ve Lounge eşleştirmesi artık uygulama içinden yönetilebiliyor.
+Overlay izninin cihazdan cihaza değişen akışı açık kaynak kurulum notlarında
+açıklanmalı; iki yeni ekran da toplu cihaz testini bekliyor.
 
 ## Kullanıcı odaklı uygulama sırası
 
@@ -37,7 +36,8 @@ Kurulum sihirbazı, geniş cihaz matrisi ve CI şu an hedef değil.
 
 ### Kurulabilirlik (en kritik)
 
-- [ ] **Eşleştirme ekranı** — TV kodunu kumandayla girme, auth state'i kalıcı saklama
+- [~] **Eşleştirme ekranı** — TV kodunu kumandayla girme, auth state'i kalıcı saklama,
+  değiştirme/kaldırma ve çalışan servisi yenileme kodu tamamlandı; cihaz testi bekliyor
 - [~] **API anahtarı ayarı** — TV arayüzünden ekleme/kaldırma ve Android Keystore ile
   şifreli saklama tamamlandı; anahtarı kaydetmeden doğrulama ve QR bağlantısı bekliyor.
   Eski `adb push` dosyası geçiş uyumluluğu için okunuyor
@@ -122,6 +122,8 @@ geri gelmedi (yani sorunun sebebi o değilmiş) ve önerilenler ekranı da geri 
 
 ### Henüz doğrulanmadı
 
+- [ ] **Toplu ayar testi** — TV kodu gir/değiştir/kaldır; API anahtarı gir/değiştir/kaldır;
+  uygulamayı kapatıp açınca ikisinin de korunduğunu ve servisin anında yenilendiğini doğrula
 - [ ] **"Bağlantıyı kes" düğmesi** — Shorts diyaloğunda basınca Shorts açılmalı, biz geri bağlanmamalıyız, anahtar kendiliğinden kapanmalı, sağ üstte bildirim çıkmalı *(kod hazır, kurulu, test edilmedi)*
 - [ ] Reklam sonrası senkron — birim testinin yakaladığı hata düzeltildi, gerçek reklamlı videoda görülmedi
 - [ ] Duraklat/devam — uzun duraklamadan sonra doğru yerden sürüyor mu

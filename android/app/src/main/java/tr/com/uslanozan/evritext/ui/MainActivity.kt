@@ -1,6 +1,7 @@
 package tr.com.uslanozan.evritext.ui
 
 import android.os.Bundle
+import android.text.InputFilter
 import android.text.InputType
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
@@ -15,7 +16,9 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import tr.com.uslanozan.evritext.R
 import tr.com.uslanozan.evritext.databinding.ActivityMainBinding
 import tr.com.uslanozan.evritext.databinding.ItemSettingRowBinding
+import tr.com.uslanozan.evritext.lounge.LoungeClient
 import tr.com.uslanozan.evritext.lounge.LoungeSession
+import tr.com.uslanozan.evritext.lounge.PairingStore
 import tr.com.uslanozan.evritext.service.EvriService
 import tr.com.uslanozan.evritext.settings.Settings
 import java.util.Locale
@@ -31,6 +34,8 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var settings: Settings
+    private lateinit var pairingStore: PairingStore
+    private var paired = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,9 +43,13 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         settings = Settings(this)
+        pairingStore = PairingStore(this)
+        paired = pairingStore.load() != null
         binding.rowEnabled.switchTitle.setText(R.string.setting_enabled)
         binding.rowEnabled.switchSummary.setText(R.string.setting_enabled_summary)
         binding.rowEnabled.root.setOnClickListener { settings.toggle() }
+        binding.rowPairing.bind(R.string.setting_pairing, getString(R.string.setting_pairing_empty))
+        binding.rowPairing.root.setOnClickListener { showPairingDialog() }
         binding.rowApiKey.bind(R.string.setting_api_key, getString(R.string.setting_api_key_empty))
         binding.rowApiKey.root.setOnClickListener { showApiKeyDialog() }
         binding.rowTargetLang.bind(R.string.setting_target_lang, "Türkçe")
@@ -75,9 +84,13 @@ class MainActivity : AppCompatActivity() {
             binding.rowApiKey.rowValue.setText(
                 if (hasApiKey) R.string.setting_api_key_set else R.string.setting_api_key_empty,
             )
+            binding.rowPairing.rowValue.setText(
+                if (paired) R.string.setting_pairing_set else R.string.setting_pairing_empty,
+            )
 
             binding.statusLine.text = when {
                 !on -> getString(R.string.setting_enabled_hint)
+                !paired -> getString(R.string.setting_pairing_empty)
                 !hasApiKey -> getString(R.string.status_api_key_required)
                 session?.status?.value == LoungeSession.Status.CONNECTED ->
                     getString(R.string.status_connected)
@@ -108,6 +121,81 @@ class MainActivity : AppCompatActivity() {
             }
             delay(200)
         }
+    }
+
+    private fun showPairingDialog() {
+        if (paired) {
+            MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.pairing_remove_title)
+                .setMessage(R.string.pairing_remove_message)
+                .setNegativeButton(android.R.string.cancel, null)
+                .setNeutralButton(R.string.action_remove) { _, _ ->
+                    pairingStore.clear()
+                    paired = false
+                    settings.setEnabled(false)
+                    EvriService.reloadPairing(this)
+                }
+                .setPositiveButton(R.string.action_pair) { _, _ -> showPairingCodeDialog() }
+                .show()
+            return
+        }
+        showPairingCodeDialog()
+    }
+
+    private fun showPairingCodeDialog() {
+        val input = EditText(this).apply {
+            setSingleLine()
+            hint = getString(R.string.pairing_input_hint)
+            inputType = InputType.TYPE_CLASS_NUMBER
+            filters = arrayOf(InputFilter.LengthFilter(PAIRING_CODE_LENGTH))
+        }
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.pairing_title)
+            .setMessage(R.string.pairing_hint)
+            .setView(input)
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton(R.string.action_pair, null)
+            .create()
+
+        dialog.setOnShowListener {
+            val button = dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
+            button.setOnClickListener {
+                val code = input.text?.toString()?.filter(Char::isDigit).orEmpty()
+                if (code.length != PAIRING_CODE_LENGTH) {
+                    input.error = getString(R.string.pairing_code_invalid)
+                    return@setOnClickListener
+                }
+                input.isEnabled = false
+                button.isEnabled = false
+                button.setText(R.string.pairing_in_progress)
+                lifecycleScope.launch {
+                    val client = LoungeClient(deviceName = getString(R.string.app_name))
+                    val pairingSucceeded = runCatching { client.pair(code) }.getOrDefault(false)
+                    when {
+                        !pairingSucceeded -> {
+                            input.error = getString(R.string.pairing_failed)
+                            input.isEnabled = true
+                            button.isEnabled = true
+                            button.setText(R.string.action_retry)
+                        }
+                        !pairingStore.save(client.auth) -> {
+                            input.error = getString(R.string.pairing_save_failed)
+                            input.isEnabled = true
+                            button.isEnabled = true
+                            button.setText(R.string.action_retry)
+                        }
+                        else -> {
+                            paired = true
+                            EvriService.reloadPairing(this@MainActivity)
+                            dialog.dismiss()
+                        }
+                    }
+                }
+            }
+        }
+        dialog.setOnDismissListener { binding.rowPairing.root.requestFocus() }
+        dialog.show()
+        input.requestFocus()
     }
 
     private fun showApiKeyDialog() {
@@ -162,5 +250,9 @@ class MainActivity : AppCompatActivity() {
     private fun ItemSettingRowBinding.bind(titleRes: Int, value: String) {
         rowTitle.setText(titleRes)
         rowValue.text = value
+    }
+
+    private companion object {
+        const val PAIRING_CODE_LENGTH = 12
     }
 }

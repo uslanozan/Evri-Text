@@ -10,15 +10,16 @@ import android.os.Build
 import android.util.Log
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
 import tr.com.uslanozan.evritext.R
-import tr.com.uslanozan.evritext.lounge.AuthState
 import tr.com.uslanozan.evritext.lounge.LoungeClient
 import tr.com.uslanozan.evritext.lounge.LoungeSession
+import tr.com.uslanozan.evritext.lounge.PairingStore
 import tr.com.uslanozan.evritext.overlay.NoticeOverlay
 import tr.com.uslanozan.evritext.overlay.SubtitleOverlay
 import tr.com.uslanozan.evritext.settings.Settings
@@ -42,6 +43,7 @@ class EvriService : LifecycleService() {
 
     private var session: LoungeSession? = null
     private var overlay: SubtitleOverlay? = null
+    private val sessionJobs = mutableListOf<Job>()
 
     private lateinit var settings: Settings
     private val notice by lazy { NoticeOverlay(this) }
@@ -80,21 +82,16 @@ class EvriService : LifecycleService() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
+        if (intent?.action == ACTION_RELOAD_PAIRING) restartSession()
         // Restart if the system kills us: losing the session means losing subtitles.
         return START_STICKY
     }
 
     private fun startSession() {
-        val authFile = File(filesDir, AUTH_FILE)
-        if (!authFile.exists()) {
-            Log.e(TAG, "no pairing at ${authFile.absolutePath}")
+        val auth = PairingStore(this).load()
+        if (auth == null) {
+            Log.e(TAG, "no valid pairing")
             updateNotification("Eşleştirme yok")
-            return
-        }
-        val auth = runCatching { AuthState.decode(authFile.readText()) }.getOrNull()
-        if (auth == null || !auth.paired) {
-            Log.e(TAG, "pairing file unreadable")
-            updateNotification("Eşleştirme okunamadı")
             return
         }
 
@@ -113,7 +110,7 @@ class EvriService : LifecycleService() {
         // Not started here: the enabled flow below owns the connection, so that being
         // switched off leaves the TV with no remote attached to it at all.
 
-        lifecycleScope.launch {
+        sessionJobs += lifecycleScope.launch {
             session.status.collect { status ->
                 updateNotification(
                     when (status) {
@@ -126,7 +123,7 @@ class EvriService : LifecycleService() {
         }
 
         // Step C's whole deliverable: prove the position follows the real playhead.
-        lifecycleScope.launch {
+        sessionJobs += lifecycleScope.launch {
             while (currentCoroutineContext().isActive) {
                 val tracker = session.tracker
                 val prediction = tracker.predict()
@@ -143,6 +140,22 @@ class EvriService : LifecycleService() {
 
         startOverlay(session)
         startSubtitles(session)
+        if (settings.enabled.value) session.start()
+    }
+
+    /** Replace the whole session after pairing changes without stacking render loops. */
+    private fun restartSession() {
+        sessionJobs.forEach(Job::cancel)
+        sessionJobs.clear()
+        session?.stop()
+        session = null
+        current = null
+        overlay?.detach()
+        overlay = null
+        notice.dismiss()
+        cues = emptyList()
+        builtVideoId = null
+        startSession()
     }
 
     /**
@@ -151,7 +164,7 @@ class EvriService : LifecycleService() {
      * is waiting on subtitles for a video they already left.
      */
     private fun startSubtitles(session: LoungeSession) {
-        lifecycleScope.launch {
+        sessionJobs += lifecycleScope.launch {
             var job: Job? = null
             var activeApiKey: String? = null
             var engine: SubtitleEngine? = null
@@ -215,7 +228,7 @@ class EvriService : LifecycleService() {
         // this notice is the only channel we have while YouTube is in front. But a
         // cached video is ready almost instantly, and flashing "preparing" at someone
         // for 200 ms is worse than staying quiet: wait to see if it is actually slow.
-        val preparing = lifecycleScope.launch {
+        val preparing = CoroutineScope(currentCoroutineContext()).launch {
             delay(PREPARING_NOTICE_AFTER_MS)
             if (cues.isEmpty()) notice.show(getString(R.string.notice_preparing), 20_000)
         }
@@ -273,7 +286,7 @@ class EvriService : LifecycleService() {
             updateNotification("Overlay izni yok")
             return
         }
-        lifecycleScope.launch {
+        sessionJobs += lifecycleScope.launch {
             while (currentCoroutineContext().isActive) {
                 val tracker = session.tracker
                 val prediction = tracker.predict()
@@ -333,6 +346,8 @@ class EvriService : LifecycleService() {
     }
 
     override fun onDestroy() {
+        sessionJobs.forEach(Job::cancel)
+        sessionJobs.clear()
         session?.stop()
         overlay?.detach()
         notice.detach()
@@ -343,9 +358,9 @@ class EvriService : LifecycleService() {
     companion object {
         private const val TAG = "EvriService"
         private const val PROBE_TAG = "Probe"
-        private const val AUTH_FILE = "lounge_auth.json"
-
         private const val DEVICE_NAME = "Evri-Text"
+        private const val ACTION_RELOAD_PAIRING =
+            "tr.com.uslanozan.evritext.action.RELOAD_PAIRING"
         private const val CHANNEL_ID = "evritext.session"
         private const val NOTIFICATION_ID = 1
 
@@ -367,6 +382,15 @@ class EvriService : LifecycleService() {
 
         fun start(context: Context) {
             val intent = Intent(context, EvriService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(intent)
+            } else {
+                context.startService(intent)
+            }
+        }
+
+        fun reloadPairing(context: Context) {
+            val intent = Intent(context, EvriService::class.java).setAction(ACTION_RELOAD_PAIRING)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 context.startForegroundService(intent)
             } else {
