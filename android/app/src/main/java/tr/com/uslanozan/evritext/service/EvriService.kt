@@ -7,6 +7,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.os.SystemClock
 import android.util.Log
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
@@ -45,6 +46,7 @@ class EvriService : LifecycleService() {
     private var session: LoungeSession? = null
     private var overlay: SubtitleOverlay? = null
     private var settingsVisible = false
+    private var loungeRunning = false
     private val sessionJobs = mutableListOf<Job>()
 
     private lateinit var settings: Settings
@@ -67,18 +69,20 @@ class EvriService : LifecycleService() {
         lifecycleScope.launch {
             settings.enabled.collect { on ->
                 Log.i(TAG, "subtitles ${if (on) "on" else "off"}")
-                if (on) {
-                    session?.start()
-                } else {
+                reconcileSession()
+                if (!on) {
                     // Off has to mean *disconnected*, not merely quiet. YouTube refuses
                     // to play Shorts while any lounge remote is attached — it thinks a
                     // phone is casting — and prompts the viewer to disconnect. Staying
                     // connected with subtitles disabled would break Shorts for someone
                     // who had already switched us off.
-                    session?.stop()
                     overlay?.show(null)
                 }
             }
+        }
+
+        lifecycleScope.launch {
+            YouTubeSessionListener.state.collect { reconcileSession() }
         }
     }
 
@@ -135,11 +139,21 @@ class EvriService : LifecycleService() {
             while (currentCoroutineContext().isActive) {
                 val tracker = session.tracker
                 val prediction = tracker.predict()
+                val mediaPositionS = YouTubeSessionListener.state.value
+                    .predictPositionMs(SystemClock.elapsedRealtime())
+                    ?.div(1000.0)
+                val deltaMs = if (prediction != null && mediaPositionS != null) {
+                    ((mediaPositionS - prediction.positionS) * 1000).toLong()
+                } else {
+                    null
+                }
                 Log.i(
                     PROBE_TAG,
                     "status=${session.status.value} video=${tracker.videoId} " +
                         "state=${tracker.state} advancing=${tracker.advancing} ad=${tracker.inAd} " +
                         "pos=${prediction?.positionS?.let { String.format(Locale.US, "%.2f", it) }} " +
+                        "mediaPos=${mediaPositionS?.let { String.format(Locale.US, "%.2f", it) }} " +
+                        "mediaDeltaMs=$deltaMs " +
                         "anchorAge=${prediction?.anchorAgeS?.let { String.format(Locale.US, "%.1f", it) }}",
                 )
                 delay(2000)
@@ -148,7 +162,35 @@ class EvriService : LifecycleService() {
 
         startOverlay(session)
         startSubtitles(session)
-        if (settings.enabled.value) session.start()
+        reconcileSession()
+    }
+
+    /**
+     * Keep Lounge attached only while an ordinary YouTube video is actually open.
+     * Without the optional media permission, retain the old always-connected behavior
+     * so an upgrade never makes an existing installation stop working.
+     */
+    private fun reconcileSession() {
+        val activeSession = session ?: return
+        val wanted = when {
+            !settings.enabled.value -> false
+            !YouTubeSessionListener.hasAccess(this) -> true
+            else -> when (YouTubeSessionListener.state.value.loungeDecision()) {
+                LoungeGateDecision.CONNECT -> true
+                LoungeGateDecision.DISCONNECT -> false
+                LoungeGateDecision.KEEP -> loungeRunning
+            }
+        }
+        if (wanted == loungeRunning) return
+        loungeRunning = wanted
+        if (wanted) {
+            Log.i(TAG, "ordinary YouTube video detected — connecting Lounge")
+            activeSession.start()
+        } else {
+            Log.i(TAG, "YouTube playback ended or left long-form — disconnecting Lounge")
+            activeSession.stop()
+            overlay?.show(null)
+        }
     }
 
     /** Replace the whole session after pairing changes without stacking render loops. */
@@ -156,6 +198,7 @@ class EvriService : LifecycleService() {
         sessionJobs.forEach(Job::cancel)
         sessionJobs.clear()
         session?.stop()
+        loungeRunning = false
         session = null
         current = null
         overlay?.detach()
@@ -339,6 +382,7 @@ class EvriService : LifecycleService() {
                     when {
                         !settings.enabled.value -> null
                         settingsVisible -> null
+                        !loungeRunning -> null
                         // Position is meaningless during ads (R5) and while stopped.
                         tracker.inAd -> null
                         prediction == null -> null
@@ -384,6 +428,7 @@ class EvriService : LifecycleService() {
         sessionJobs.forEach(Job::cancel)
         sessionJobs.clear()
         session?.stop()
+        loungeRunning = false
         overlay?.detach()
         notice.detach()
         current = null

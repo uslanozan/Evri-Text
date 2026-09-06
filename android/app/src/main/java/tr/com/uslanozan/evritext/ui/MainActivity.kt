@@ -1,6 +1,8 @@
 package tr.com.uslanozan.evritext.ui
 
+import android.content.Intent
 import android.os.Bundle
+import android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS
 import android.text.InputFilter
 import android.text.InputType
 import android.view.View
@@ -21,6 +23,9 @@ import tr.com.uslanozan.evritext.lounge.LoungeClient
 import tr.com.uslanozan.evritext.lounge.LoungeSession
 import tr.com.uslanozan.evritext.lounge.PairingStore
 import tr.com.uslanozan.evritext.service.EvriService
+import tr.com.uslanozan.evritext.service.LoungeGateDecision
+import tr.com.uslanozan.evritext.service.YouTubeSessionListener
+import tr.com.uslanozan.evritext.service.loungeDecision
 import tr.com.uslanozan.evritext.settings.GeminiApiKeyValidator
 import tr.com.uslanozan.evritext.settings.Settings
 import tr.com.uslanozan.evritext.settings.SubtitleAppearance
@@ -61,6 +66,8 @@ class MainActivity : AppCompatActivity() {
         binding.rowPairing.root.setOnClickListener { showPairingDialog() }
         binding.rowApiKey.bind(R.string.setting_api_key, getString(R.string.setting_api_key_empty))
         binding.rowApiKey.root.setOnClickListener { showApiKeyDialog() }
+        binding.rowYouTubeDetection.bind(R.string.setting_youtube_detection, "")
+        binding.rowYouTubeDetection.root.setOnClickListener { showYouTubeDetectionDialog() }
         binding.rowSubtitleColor.bind(R.string.setting_subtitle_color, "")
         binding.rowSubtitleColor.root.setOnClickListener { showColorDialog() }
         binding.rowSubtitleSize.bind(R.string.setting_subtitle_size, "")
@@ -95,6 +102,7 @@ class MainActivity : AppCompatActivity() {
 
             val on = settings.enabled.value
             val hasApiKey = settings.apiKey.value != null
+            val hasYouTubeAccess = YouTubeSessionListener.hasAccess(this)
             val appearance = settings.subtitleAppearance()
             // Driven from the setting rather than from the tap, so the switch is right
             // even when something else flips it — the shortcut, or another screen.
@@ -107,6 +115,13 @@ class MainActivity : AppCompatActivity() {
             )
             binding.rowPairing.rowValue.setText(
                 if (paired) R.string.setting_pairing_set else R.string.setting_pairing_empty,
+            )
+            binding.rowYouTubeDetection.rowValue.setText(
+                if (hasYouTubeAccess) {
+                    R.string.setting_youtube_detection_on
+                } else {
+                    R.string.setting_youtube_detection_off
+                },
             )
             binding.rowSubtitleColor.rowValue.setText(colorLabel(appearance.color))
             binding.rowSubtitleSize.rowValue.setText(sizeLabel(appearance.size))
@@ -121,6 +136,11 @@ class MainActivity : AppCompatActivity() {
                 !on -> getString(R.string.setting_enabled_hint)
                 !paired -> getString(R.string.setting_pairing_empty)
                 !hasApiKey -> getString(R.string.status_api_key_required)
+                hasYouTubeAccess &&
+                    YouTubeSessionListener.state.value.loungeDecision() !=
+                    LoungeGateDecision.CONNECT &&
+                    session?.status?.value == LoungeSession.Status.DISCONNECTED ->
+                    getString(R.string.status_waiting_for_youtube)
                 session?.status?.value == LoungeSession.Status.CONNECTED ->
                     getString(R.string.status_connected)
                 session?.status?.value == LoungeSession.Status.CONNECTING ->
@@ -356,6 +376,18 @@ class MainActivity : AppCompatActivity() {
         dialog.setOnDismissListener { binding.rowApiKey.root.requestFocus() }
         dialog.show()
         input.requestFocus()
+    }
+
+    private fun showYouTubeDetectionDialog() {
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.youtube_detection_dialog_title)
+            .setMessage(R.string.youtube_detection_dialog_message)
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton(R.string.action_open_settings) { _, _ ->
+                runCatching { startActivity(Intent(ACTION_NOTIFICATION_LISTENER_SETTINGS)) }
+            }
+            .setOnDismissListener { binding.rowYouTubeDetection.root.requestFocus() }
+            .show()
     }
 
     private fun restoreApiKeyDialog(

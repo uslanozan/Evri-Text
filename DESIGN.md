@@ -308,7 +308,7 @@ Son satır tasarımı değiştiriyor. Mevcut hat **tüm video çevrilene kadar h
 
 | # | Risk | Durum / azaltma |
 |---|---|---|
-| **R1** | **Senkron kayması.** Lounge olayları nabız atışı göndermiyor; arada interpolasyon yapıyoruz | ✅ **KAPANDI — p95 234 ms.** Nabız atışı olmadığı doğrulandı, ama `getNowPlaying`'in sorgu limiti de yok; 20 sn'de bir çapa fazlasıyla yetiyor. Canlı testte senkron tuttu. Elle offset ayarı yine de kalacak |
+| **R1** | **Senkron kayması.** Lounge olayları nabız atışı göndermiyor; arada interpolasyon yapıyoruz | ✅ **KAPANDI — p95 234 ms.** Nabız atışı olmadığı doğrulandı, ama `getNowPlaying`'in sorgu limiti de yok; 20 sn'de bir çapa fazlasıyla yetiyor. Canlı testte senkron tuttu. Kullanıcıya manuel offset yüklenmeyecek; sapma olursa uygulama tarafında düzeltilecek |
 | **R2** | **Extractor bakımı bize kalıyor.** SmartTube fork'unda poToken/BotGuard'ı upstream hallediyordu; bağımsız uygulamada caption ve ses akışını kendimiz çekeceğiz | 🟡 **Çalışıyor, ama risk kalıcı.** NewPipeExtractor v0.26.4 cihazda caption buluyor. İki tuzak çıktı: URL `fmt=ttml` ile geliyor, `fmt=vtt`'ye zorlanmalı; ve kütüphane `URLDecoder.decode(String,Charset)` (API 33+) çağırdığı için API 30'da **`desugar_jdk_libs_nio`** zorunlu. YouTube değiştikçe güncellemek gerekecek — **bu mimarinin kabul edilen bedeli** |
 | **R3** | **Lounge protokolünün JVM implementasyonu yok.** Python, Rust, Go, Node var; Kotlin yok | ✅ **KAPANDI.** OkHttp ile sıfırdan yazıldı ve cihazda doğrulandı: bağlanma, bind kanalı chunk çözme, olay ayrıştırma, interpolasyon, 20 sn'lik yeniden çapa. Çapa anındaki sapma ~110 ms, Phase 0 ölçümüyle tutarlı |
 | **R4** | **Overlay'in tam ekran YouTube üzerinde göründüğü cihazda doğrulanmadı** | ✅ **KAPANDI.** Bu cihazda kanıtlandı. Tek uyarı: engelleme API'si API 31'de, cihaz API 30 — bir sürüm payımız var |
@@ -316,8 +316,8 @@ Son satır tasarımı değiştiriyor. Mevcut hat **tüm video çevrilene kadar h
 | **R6** | Gemini STT timestamp'leri güvenilmez | 🔴 **ÖLÇÜLDÜ — KIRMIZI.** Gerçek filmde, YouTube ASR'si doğruluk referansı alınarak: \|hata\| medyan **2,27 s**, p95 **4,01 s**. Metin kalitesi iyi, zamanlama değil. **Hata birikimli değil, her cümlede bağımsız** — yani "parçala, her parçanın offset'i bizde olsun" azaltması yetmiyor, belirsizlik parça içinde de duruyor. Ayrıntı ve çıkış yolu: bölüm 2.5 |
 | **R7** | ASR caption kalitesi kötüyse çeviri de kötü olur | ✅ **KAPANDI.** ASR kaynaklı çeviri VLC'de kontrol edildi ve **hedef kullanıcı takip edebildi** — projenin tek gerçek kabul kriteri. Kalan kusurlar kozmetik: yer yer kelime hatası, cue'ların ~%11'i iki satırı aşıyor, diyalog çizgileri tutarsız |
 | **R8** | Kurulum bir defalık ADB gerektiriyor; `adb tcpip 5555` reboot'ta kalıcı değil | ✅ Doğrulandı. Bu cihazda ayrı "ağ üzerinden hata ayıklama" seçeneği yoktu ama USB hata ayıklama açıkken 5555 zaten dinliyordu. İzin "her zaman" verilince kalıcı |
-| **R10b** | **Bağlıyken video sonu ekranı kayboluyor.** Video bitince "SIRADAKİ / önerilenler" gelmiyor, ana sayfaya dönülüyor | 🟡 Ölçüldü, açık. `setAutoplayMode` sanılmıştı; komut kaldırıldı, davranış sürüyor — sebep sadece bağlı olmak. Otomatik oynatma artık kendiliğinden açılmıyor, o kısım düzeldi. Çözüm fikirleri `TODO.md`'de (R10 bölümü) |
-| **R10** | **Bağlıyken Shorts oynatılamıyor.** Lounge bir yayın protokolü ve Shorts o akışta desteklenmiyor; ekran bağlı bir kumanda görünce "cihazın bağlantısını kesin" diyor ve Shorts'tan çıkıyor | 🟡 **Mimarinin doğasında, kaçışı yok.** Pozisyon takibi Lounge'a bağlı olduğu sürece bu bedel var. Azaltma: aç/kapa anahtarı artık gerçekten bağlantıyı kesiyor ve ayrılırken ekrana `terminate` gönderiyor, yani kapalıyken TV tamamen normal. **Bunun sonucu:** Shorts, hızlı aç/kapa kısayolunun gerçek ve tekrarlayan gerekçesi — Türkçe video meselesi otomatik tespitle çözüldü ama bu çözülemiyor, kullanıcı Shorts'a girmeden önce kapatmak zorunda |
+| **R10b** | **Bağlıyken video sonu ekranı kayboluyor.** Video bitince "SIRADAKİ / önerilenler" gelmiyor, ana sayfaya dönülüyor | ✅ **KAPANDI.** İsteğe bağlı MediaSession izniyle video `STOPPED/null` olduğunda Lounge hemen ayrılıyor. Gerçek videoda sona kadar izlendi ve önerilenler ekranının geri geldiği doğrulandı |
+| **R10** | **Bağlıyken Shorts oynatılamıyor.** Lounge bir yayın protokolü ve Shorts o akışta desteklenmiyor; ekran bağlı bir kumanda görünce "cihazın bağlantısını kesin" diyor ve Shorts'tan çıkıyor | 🟡 **Büyük ölçüde azaltıldı.** MediaSession kapısı normal video ayrıntıları görünürken bağlanıyor, oynatma ekranı kapanınca ayrılıyor ve metadata'sı boş olan Shorts'ta geri bağlanmıyor. Normal video → Shorts doğrudan bağlantısında YouTube diyaloğu `STOPPED` olayından önce açtığı için bir kez "Bağlantıyı kes" gerekebiliyor; sonrasında Evri-Text anahtarı açık kalıyor ve normal videoda otomatik geri bağlanıyor |
 | **R9** | **Sağlayıcı modeli emekliye ayırıyor.** `gemini-2.5-flash-lite` yeni key'lere kapatıldı, kod 404 aldı | Model adı yapılandırma değeri, koda gömülü değil. Ayarlarda seçilebilir olacak |
 
 ---
@@ -358,21 +358,22 @@ Teknik riskler kapandığı için kalan sıra kullanıcı deneyimine göredir:
 1. ✅ **Proje iskeleti** — `android/`, tek modül, minSdk 28 / target 35
 2. ✅ **İlk dikey dilim: pozisyon takipçisi.** `LoungeClient` + `PositionTracker` + foreground service. **R3 kapandı.**
    Buradan çıkan mimari kural: **oturum Activity'de yaşayamaz.** YouTube öne geldiği anda Android bizim Activity'mizi yok ediyor ve takip ölüyor. Süreç hayatta kalıyor ama coroutine'ler iptal oluyor. Servis zorunlu, ekran yalnızca bir ayar paneli.
-3. 🟡 **ADB'siz kimlik bilgileri** — API anahtarı UI'sı/Keystore saklama ve TV koduyla
-   Lounge eşleştirmesi tamamlandı, toplu cihaz testi bekliyor. Eşleştirme değişince
-   servis eski oturum döngülerini iptal edip yeni auth ile yerinde yeniden kuruluyor.
-   Anahtarı kaydetmeden doğrulama ve QR kolaylığı sonraki iyileştirme
+3. 🟡 **ADB'siz kimlik bilgileri** — API anahtarı UI'sı, Keystore saklama, kaydetmeden
+   Gemini doğrulaması ve Google TV telefon klavyesi tamamlandı. TV koduyla Lounge
+   eşleştirmesi de çalışıyor; toplu ekle/değiştir/kaldır testi bekliyor. Eşleştirme
+   değişince servis eski oturum döngülerini iptal edip yeni auth ile yerinde kuruluyor
 4. ✅ **`SubtitleOverlay`** — `TYPE_APPLICATION_OVERLAY`, alt-orta, cihazda YouTube üstünde doğrulandı
 5. ✅ **Caption + çeviri hattı portu** — NewPipeExtractor + `evri` modüllerinin portu, kademeli çeviriyle.
    Cihazda uçtan uca çalışıyor: **ilk altyazı 8,5 saniyede** (Phase 0'da 89 sn), tam video 19 saniyede.
    Ayrıştırma ve cümle birleştirme Python'la birebir aynı sonucu veriyor — parity testiyle sabitlendi.
 6. **Görsel deneyim** — renk, boyut, arka plan, konum, hazır temalar ve canlı önizleme
 7. **Akıcılık ve geri bildirim** — video/sarma geçişleri, ilerleme ve eyleme dönük hata mesajları
-8. **Günlük kullanım** — hızlı aç/kapa, offset/dil/model ayarları ve önbellek kontrolü
-9. **R10 azaltması** — MediaSession ile Lounge bağlantısını yalnız gerektiğinde açmayı dene
+8. **Günlük kullanım** — hızlı aç/kapa, dil/model ayarları ve önbellek kontrolü
+9. 🟡 **R10 azaltması** — MediaSession kapısı kuruldu ve normal video/Shorts ayrımı
+   cihazda doğrulandı; doğrudan Shorts geçişi ve video sonu ekranı için sınır testleri sürüyor
 10. **Açık kaynak yayını** — README, lisans kontrolü ve imzalı APK
 
-Görsel deneyimin ilk dilimi tamamlandı: üç yazı rengi, dört yazı boyutu, dört siyah
+Görsel deneyimin ilk dilimi tamamlandı: altı yazı rengi, dört yazı boyutu, dört siyah
 arka plan opaklığı ve üç dikey konum seçeneği var. Ayar ekranındaki örnek metin renk,
 boyut ve arka planı anında gösteriyor; çalışan overlay aynı `Settings` kaynağını her
 çizimde okuyarak uygulama yeniden başlamadan güncelleniyor. Ağ, API yetkilendirme,

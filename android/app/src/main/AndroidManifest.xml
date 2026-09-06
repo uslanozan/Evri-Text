@@ -52,6 +52,19 @@
                 android:value="Tracks the YouTube playhead to draw translated subtitles over it" />
         </service>
 
+        <!-- Notification-listener access also grants read-only access to active media
+             sessions. We use it to observe YouTube locally, never to read or store
+             notifications. The user must enable this component explicitly. -->
+        <service
+            android:name=".service.YouTubeSessionListener"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
     </application>
 
 </manifest>

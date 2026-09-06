@@ -7,6 +7,7 @@
     <string name="status_connecting">Bağlanıyor…</string>
     <string name="status_connected">Bağlı</string>
     <string name="status_api_key_required">API anahtarı gerekli</string>
+    <string name="status_waiting_for_youtube">YouTube videosu bekleniyor</string>
 
     <string name="settings_title">Ayarlar</string>
     <string name="setting_enabled">Altyazı</string>
@@ -17,6 +18,12 @@
     <string name="setting_pairing">YouTube TV eşleştirmesi</string>
     <string name="setting_pairing_set">Eşleştirildi</string>
     <string name="setting_pairing_empty">Eşleştirilmedi</string>
+    <string name="setting_youtube_detection">Akıllı YouTube bağlantısı</string>
+    <string name="setting_youtube_detection_on">Etkin</string>
+    <string name="setting_youtube_detection_off">İzin ver</string>
+    <string name="youtube_detection_dialog_title">YouTube algılama izni</string>
+    <string name="youtube_detection_dialog_message">Bu özellik normal videolar arasında bağlantıyı keserek Shorts’un ve YouTube önerilerinin bozulmasını önler. Android bunu “Bildirim erişimi” olarak adlandırır; Evri-Text bildirimlerinizi okumaz veya saklamaz, yalnızca YouTube’un oynatma durumunu görür.</string>
+    <string name="action_open_settings">Ayarları aç</string>
 
     <!-- Shown over YouTube, where the settings screen is not visible to explain itself. -->
     <string name="notice_preparing">Altyazı hazırlanıyor…</string>

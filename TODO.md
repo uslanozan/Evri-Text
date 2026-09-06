@@ -108,12 +108,23 @@ görünüyor. Kuyruk yeteneğini reddetmek mümkün değil.
 geri gelmedi (yani sorunun sebebi o değilmiş) ve önerilenler ekranı da geri gelmedi
 (yani onu bastıran da o değilmiş). Her ikisi de sadece bağlı olmaktan kaynaklanıyor.
 
-**Şu anki hafifletme:** ekran bizi attığında ısrar etmiyoruz — YouTube'un kendi
-"Bağlantıyı kes" düğmesi artık gerçekten işe yarıyor, altyazı kendini kapatıyor.
+**Şu anki hafifletme:** isteğe bağlı bildirim erişimiyle YouTube'un yerel MediaSession'ı
+izleniyor. Normal video ayrıntıları geldiğinde Lounge bağlanıyor; oynatma ekranından
+çıkılırken oturum `STOPPED/null` olur olmaz ayrılıyor. Shorts metadata'sı başlık,
+sanatçı ve kapak alanlarını boş bıraktığı için orada yeniden bağlanmıyor. Bu izin
+olmadan eski davranış korunuyor.
 
 **Denenecek fikirler**
-- [ ] `MediaSessionManager` ile oynatmayı yerelden izle (NotificationListener izni). Süre bilgisi de geliyor: **60 sn'den kısaysa Shorts'tur, hiç bağlanma.** Lounge'a yalnız gerçek video oynarken bağlanmak iki belirtiyi de büyük ölçüde giderir. Phase 0 preflight'ı `dumpsys media_session` dökümünü tam bu ihtimal için kaydetmişti
-- [ ] Yukarıdaki iyi çalışırsa: pozisyonu da oradan almak mümkün mü, Lounge'a hiç gerek kalır mı? Hassasiyeti R1'e (p95 234 ms) karşı ölçülmeli
+- [~] `MediaSessionManager` kapısı tamamlandı ve normal video → bağlan, Shorts → bağlı
+  kalma akışı cihazda doğrulandı. Süre eşiği kullanılmıyor; Shorts artık üç dakikaya
+  çıkabildiği için cihazda ölçülen boş metadata ayrımı kullanılıyor. Normal videodan
+  doğrudan Shorts bağlantısına atlamak hâlâ uyarıyı bir kez gösteriyor: YouTube uyarıyı
+  MediaSession'ın `STOPPED` olayından önce açıyor. Düğmeye basınca Shorts açılıyor ve
+  Evri-Text açık kalarak sonraki normal videoda yeniden bağlanabiliyor
+- [~] MediaSession pozisyonu da kullanılabiliyor. Eşzamanlı cihaz koşularında fark
+  sabit kaldı; duraklatmada 0 ms, ileri sarma yerleştikten sonra yaklaşık +134 ms ölçüldü.
+  Lounge'ı yalnız video kimliğini almak için kısa süreli kullanmaya geçmeden önce reklam
+  boyunca daha uzun ölçüm gerekli
 - [ ] `AccessibilityService` yolu: Shorts ekranını görüp otomatik çekilmek. Aynı izin tartışması, ama tuş kısayolunu da beraberinde getirir
 
 ---
@@ -129,6 +140,7 @@ geri gelmedi (yani sorunun sebebi o değilmiş) ve önerilenler ekranı da geri 
 - [x] Shorts, altyazı **kapalıyken** sorunsuz
 - [x] Google TV telefon kumandası — API alanına metin gönderiyor, giriş bitince D-pad'e dönüyor
 - [x] Geçersiz API anahtarı — Gemini doğrulamasında reddediliyor ve kayıtlı anahtar korunuyor
+- [x] Akıllı YouTube bağlantısı — normal videoda Lounge bağlanıyor; Shorts oynarken bağlı kalmıyor
 - [~] Altyazı konumu ve boyutu — kullanılabilir; ince ayar kullanıcı tercihine bağlanacak
 
 ### Henüz doğrulanmadı
@@ -139,7 +151,11 @@ geri gelmedi (yani sorunun sebebi o değilmiş) ve önerilenler ekranı da geri 
   hem önizlemede hem YouTube overlay'inde anında ve okunaklı değiştiğini doğrula
 - [~] **Toplu hata testi** — yanlış API anahtarı mesajı doğrulandı; internet kapalıyken
   doğru mesajın çıktığını ve başarısız çevirinin önbelleğe yazılmadığını doğrula
-- [ ] **"Bağlantıyı kes" düğmesi** — Shorts diyaloğunda basınca Shorts açılmalı, biz geri bağlanmamalıyız, anahtar kendiliğinden kapanmalı, sağ üstte bildirim çıkmalı *(kod hazır, kurulu, test edilmedi)*
+- [x] **"Bağlantıyı kes" düğmesi** — Shorts açılıyor, Evri-Text Shorts boyunca ayrık
+  kalıyor; akıllı bağlantı etkinken altyazı anahtarı açık kalıp sonraki normal videoda
+  yeniden kullanılabiliyor
+- [x] **Video sonu ekranı** — MediaSession kapısı video sonunda Lounge'ı ayırdı ve
+  önerilenler ekranı cihazda geri geldi
 - [ ] Reklam sonrası senkron — birim testinin yakaladığı hata düzeltildi, gerçek reklamlı videoda görülmedi
 - [ ] Duraklat/devam — uzun duraklamadan sonra doğru yerden sürüyor mu
 

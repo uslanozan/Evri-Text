@@ -49,6 +49,7 @@ class LoungeSession(
 
     private var subscribeJob: Job? = null
     private var anchorJob: Job? = null
+    private var disconnectJob: Job? = null
 
     /**
      * Called when the screen ends the session from its side, as opposed to us losing
@@ -59,7 +60,14 @@ class LoungeSession(
 
     fun start() {
         if (subscribeJob != null) return
-        subscribeJob = scope.launch { subscribeForever() }
+        val pendingDisconnect = disconnectJob
+        subscribeJob = scope.launch {
+            // A quick video-to-video transition may ask us to reconnect before the
+            // previous terminate request has returned. Never let that late terminate
+            // tear down the fresh connection.
+            pendingDisconnect?.join()
+            subscribeForever()
+        }
         anchorJob = scope.launch { reanchorForever() }
     }
 
@@ -72,7 +80,9 @@ class LoungeSession(
         // Fire-and-forget on a scope that outlives the cancelled jobs: the screen has
         // to be told, or it keeps treating us as an attached remote and goes on
         // refusing to play Shorts.
-        scope.launch { runCatching { client.disconnect() } }
+        if (disconnectJob?.isActive != true) {
+            disconnectJob = scope.launch { runCatching { client.disconnect() } }
+        }
     }
 
     private suspend fun subscribeForever() {

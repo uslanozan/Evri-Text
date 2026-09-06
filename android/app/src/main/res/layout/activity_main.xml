@@ -72,6 +72,10 @@
             layout="@layout/item_setting_row" />
 
         <include
+            android:id="@+id/rowYouTubeDetection"
+            layout="@layout/item_setting_row" />
+
+        <include
             android:id="@+id/rowSubtitleColor"
             layout="@layout/item_setting_row" />
 
