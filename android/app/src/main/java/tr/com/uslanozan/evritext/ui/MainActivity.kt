@@ -83,10 +83,25 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        EvriService.setSettingsVisible(this, true)
+    }
+
+    override fun onStop() {
+        EvriService.setSettingsVisible(this, false)
+        super.onStop()
+    }
+
     private suspend fun renderLoop() {
         while (currentCoroutineContext().isActive) {
             val session = EvriService.current
-            val tracker = session?.tracker
+            // A disconnected tracker only contains the last playback anchor. Showing
+            // it as live data makes the position and anchor age appear to keep moving
+            // after subtitles have been switched off.
+            val tracker = session
+                ?.takeIf { it.status.value == LoungeSession.Status.CONNECTED }
+                ?.tracker
             val prediction = tracker?.predict()
 
             val on = settings.enabled.value
@@ -214,6 +229,9 @@ class MainActivity : AppCompatActivity() {
         SubtitleColor.WHITE -> R.string.subtitle_color_white
         SubtitleColor.YELLOW -> R.string.subtitle_color_yellow
         SubtitleColor.CYAN -> R.string.subtitle_color_cyan
+        SubtitleColor.GREEN -> R.string.subtitle_color_green
+        SubtitleColor.PINK -> R.string.subtitle_color_pink
+        SubtitleColor.ORANGE -> R.string.subtitle_color_orange
     }
 
     private fun sizeLabel(value: SubtitleSize) = when (value) {

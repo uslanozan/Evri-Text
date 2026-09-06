@@ -9,6 +9,9 @@ enum class SubtitleColor(val argb: Int) {
     WHITE(Color.WHITE),
     YELLOW(Color.rgb(255, 221, 87)),
     CYAN(Color.rgb(112, 225, 255)),
+    GREEN(Color.rgb(128, 255, 160)),
+    PINK(Color.rgb(255, 140, 200)),
+    ORANGE(Color.rgb(255, 170, 80)),
 }
 
 enum class SubtitleSize(val sp: Float) {

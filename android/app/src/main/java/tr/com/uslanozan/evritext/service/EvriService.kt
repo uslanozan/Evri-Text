@@ -43,6 +43,7 @@ class EvriService : LifecycleService() {
 
     private var session: LoungeSession? = null
     private var overlay: SubtitleOverlay? = null
+    private var settingsVisible = false
     private val sessionJobs = mutableListOf<Job>()
 
     private lateinit var settings: Settings
@@ -82,7 +83,13 @@ class EvriService : LifecycleService() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
-        if (intent?.action == ACTION_RELOAD_PAIRING) restartSession()
+        when (intent?.action) {
+            ACTION_RELOAD_PAIRING -> restartSession()
+            ACTION_SET_SETTINGS_VISIBLE -> {
+                settingsVisible = intent.getBooleanExtra(EXTRA_VISIBLE, false)
+                if (settingsVisible) overlay?.show(null)
+            }
+        }
         // Restart if the system kills us: losing the session means losing subtitles.
         return START_STICKY
     }
@@ -314,6 +321,7 @@ class EvriService : LifecycleService() {
                 overlay.show(
                     when {
                         !settings.enabled.value -> null
+                        settingsVisible -> null
                         // Position is meaningless during ads (R5) and while stopped.
                         tracker.inAd -> null
                         prediction == null -> null
@@ -382,6 +390,9 @@ class EvriService : LifecycleService() {
         private const val DEVICE_NAME = "Evri-Text"
         private const val ACTION_RELOAD_PAIRING =
             "tr.com.uslanozan.evritext.action.RELOAD_PAIRING"
+        private const val ACTION_SET_SETTINGS_VISIBLE =
+            "tr.com.uslanozan.evritext.action.SET_SETTINGS_VISIBLE"
+        private const val EXTRA_VISIBLE = "visible"
         private const val CHANNEL_ID = "evritext.session"
         private const val NOTIFICATION_ID = 1
 
@@ -412,6 +423,17 @@ class EvriService : LifecycleService() {
 
         fun reloadPairing(context: Context) {
             val intent = Intent(context, EvriService::class.java).setAction(ACTION_RELOAD_PAIRING)
+            start(context, intent)
+        }
+
+        fun setSettingsVisible(context: Context, visible: Boolean) {
+            val intent = Intent(context, EvriService::class.java)
+                .setAction(ACTION_SET_SETTINGS_VISIBLE)
+                .putExtra(EXTRA_VISIBLE, visible)
+            start(context, intent)
+        }
+
+        private fun start(context: Context, intent: Intent) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 context.startForegroundService(intent)
             } else {

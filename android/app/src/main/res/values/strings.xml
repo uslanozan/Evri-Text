@@ -45,6 +45,9 @@
     <string name="subtitle_color_white">Beyaz</string>
     <string name="subtitle_color_yellow">Sarı</string>
     <string name="subtitle_color_cyan">Turkuaz</string>
+    <string name="subtitle_color_green">Yeşil</string>
+    <string name="subtitle_color_pink">Pembe</string>
+    <string name="subtitle_color_orange">Turuncu</string>
     <string name="subtitle_size_small">Küçük</string>
     <string name="subtitle_size_medium">Orta</string>
     <string name="subtitle_size_large">Büyük</string>
