@@ -38,9 +38,10 @@ Kurulum sihirbazı, geniş cihaz matrisi ve CI şu an hedef değil.
 
 - [~] **Eşleştirme ekranı** — TV kodunu kumandayla girme, auth state'i kalıcı saklama,
   değiştirme/kaldırma ve çalışan servisi yenileme kodu tamamlandı; cihaz testi bekliyor
-- [~] **API anahtarı ayarı** — TV arayüzünden ekleme/kaldırma ve Android Keystore ile
-  şifreli saklama tamamlandı; anahtarı kaydetmeden doğrulama ve QR bağlantısı bekliyor.
-  Eski `adb push` dosyası geçiş uyumluluğu için okunuyor
+- [x] **API anahtarı ayarı** — TV arayüzünden ekleme/kaldırma, Android Keystore ile
+  şifreli saklama ve kaydetmeden Gemini doğrulaması tamamlandı. Uzun anahtar Google TV
+  telefon kumandasının klavyesiyle yapıştırılabiliyor; eski `adb push` dosyası geçiş
+  uyumluluğu için okunuyor
 - [ ] Overlay izni akışı: Android TV'de `MANAGE_OVERLAY_PERMISSION` ekranı yok, kullanıcıya ne söyleyeceğiz
 
 ### Ayarlar
@@ -126,6 +127,8 @@ geri gelmedi (yani sorunun sebebi o değilmiş) ve önerilenler ekranı da geri 
 - [x] Hazırlanıyor bildirimi — yeni videoda çıkıyor, önbellektekinde çıkmıyor
 - [x] Önbellek — daha önce izlenen video anında geliyor
 - [x] Shorts, altyazı **kapalıyken** sorunsuz
+- [x] Google TV telefon kumandası — API alanına metin gönderiyor, giriş bitince D-pad'e dönüyor
+- [x] Geçersiz API anahtarı — Gemini doğrulamasında reddediliyor ve kayıtlı anahtar korunuyor
 - [~] Altyazı konumu ve boyutu — kullanılabilir; ince ayar kullanıcı tercihine bağlanacak
 
 ### Henüz doğrulanmadı
@@ -134,8 +137,8 @@ geri gelmedi (yani sorunun sebebi o değilmiş) ve önerilenler ekranı da geri 
   uygulamayı kapatıp açınca ikisinin de korunduğunu ve servisin anında yenilendiğini doğrula
 - [ ] **Toplu görünüm testi** — üç renk, dört boyut, arka plan kapalı/koyu ve üç konumun
   hem önizlemede hem YouTube overlay'inde anında ve okunaklı değiştiğini doğrula
-- [ ] **Toplu hata testi** — yanlış API anahtarı ve internet kapalıyken doğru mesajın
-  çıktığını; başarısız çevirinin önbelleğe yazılmadığını doğrula
+- [~] **Toplu hata testi** — yanlış API anahtarı mesajı doğrulandı; internet kapalıyken
+  doğru mesajın çıktığını ve başarısız çevirinin önbelleğe yazılmadığını doğrula
 - [ ] **"Bağlantıyı kes" düğmesi** — Shorts diyaloğunda basınca Shorts açılmalı, biz geri bağlanmamalıyız, anahtar kendiliğinden kapanmalı, sağ üstte bildirim çıkmalı *(kod hazır, kurulu, test edilmedi)*
 - [ ] Reklam sonrası senkron — birim testinin yakaladığı hata düzeltildi, gerçek reklamlı videoda görülmedi
 - [ ] Duraklat/devam — uzun duraklamadan sonra doğru yerden sürüyor mu

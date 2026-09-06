@@ -21,6 +21,7 @@ import tr.com.uslanozan.evritext.lounge.LoungeClient
 import tr.com.uslanozan.evritext.lounge.LoungeSession
 import tr.com.uslanozan.evritext.lounge.PairingStore
 import tr.com.uslanozan.evritext.service.EvriService
+import tr.com.uslanozan.evritext.settings.GeminiApiKeyValidator
 import tr.com.uslanozan.evritext.settings.Settings
 import tr.com.uslanozan.evritext.settings.SubtitleAppearance
 import tr.com.uslanozan.evritext.settings.SubtitleBackground
@@ -41,6 +42,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var settings: Settings
     private lateinit var pairingStore: PairingStore
+    private val apiKeyValidator = GeminiApiKeyValidator()
     private var paired = false
     private var previewAppearance: SubtitleAppearance? = null
 
@@ -315,22 +317,56 @@ class MainActivity : AppCompatActivity() {
 
         val dialog = builder.create()
         dialog.setOnShowListener {
-            dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            val save = dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
+            val remove = dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEUTRAL)
+            save.setOnClickListener {
                 val value = input.text?.toString()?.trim().orEmpty()
                 if (value.isEmpty()) {
                     input.error = getString(R.string.api_key_required)
                 } else {
-                    settings.setApiKey(value)
-                    dialog.dismiss()
+                    input.isEnabled = false
+                    save.isEnabled = false
+                    remove?.isEnabled = false
+                    save.setText(R.string.api_key_validating)
+                    lifecycleScope.launch {
+                        val result = apiKeyValidator.validate(value)
+                        if (!dialog.isShowing) return@launch
+                        when (result) {
+                            GeminiApiKeyValidator.Result.VALID -> {
+                                settings.setApiKey(value)
+                                dialog.dismiss()
+                            }
+                            GeminiApiKeyValidator.Result.INVALID -> {
+                                restoreApiKeyDialog(input, save, remove)
+                                input.error = getString(R.string.api_key_invalid)
+                            }
+                            GeminiApiKeyValidator.Result.UNAVAILABLE -> {
+                                restoreApiKeyDialog(input, save, remove)
+                                input.error = getString(R.string.api_key_validation_unavailable)
+                            }
+                        }
+                    }
                 }
             }
-            dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEUTRAL)?.setOnClickListener {
+            remove?.setOnClickListener {
                 settings.clearApiKey()
                 dialog.dismiss()
             }
         }
         dialog.setOnDismissListener { binding.rowApiKey.root.requestFocus() }
         dialog.show()
+        input.requestFocus()
+    }
+
+    private fun restoreApiKeyDialog(
+        input: EditText,
+        save: android.widget.Button,
+        remove: android.widget.Button?,
+    ) {
+        input.isEnabled = true
+        save.isEnabled = true
+        remove?.isEnabled = true
+        save.setText(R.string.action_save)
         input.requestFocus()
     }
 

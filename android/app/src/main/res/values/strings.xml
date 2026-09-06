@@ -32,9 +32,12 @@
     <string name="setting_api_key_empty">Ayarlanmadı</string>
     <string name="setting_api_key_set">Ayarlı</string>
     <string name="api_key_dialog_title">Gemini API anahtarı</string>
-    <string name="api_key_dialog_message">Anahtar yalnızca bu cihazda şifreli olarak saklanır ve çeviri isteklerinde kullanılır.</string>
+    <string name="api_key_dialog_message">Anahtar yalnızca bu cihazda şifreli olarak saklanır. Google TV telefon kumandasındaki klavyeyle buraya yapıştırabilirsiniz.</string>
     <string name="api_key_input_hint">API anahtarını girin</string>
     <string name="api_key_required">Bir API anahtarı girin</string>
+    <string name="api_key_validating">Kontrol ediliyor…</string>
+    <string name="api_key_invalid">Anahtar Gemini tarafından kabul edilmedi</string>
+    <string name="api_key_validation_unavailable">Anahtar doğrulanamadı — internet bağlantısını kontrol edip tekrar deneyin</string>
     <string name="action_save">Kaydet</string>
     <string name="action_remove">Kaldır</string>
     <string name="subtitle_preview_text">Altyazı böyle görünecek</string>
