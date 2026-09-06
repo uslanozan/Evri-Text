@@ -11,8 +11,10 @@ Resmî YouTube uygulamasının üzerine, yapay zeka ile üretilmiş Türkçe alt
 > **Tasarım başlangıçta Android 9 / API 28 varsayıyordu; cihaz Android 11 / API 30
 > bildiriyor.** Bu bazı gerekçeleri değiştirdi — aşağıda işaretli.
 
-**Durum:** **Phase 0 tamamlandı.** Bütün riskler ölçüldü, PC'den TV'ye canlı Türkçe altyazı basan prototip çalışıyor. Sıradaki: Phase 1, Android uygulaması.
-Ölçüm sonuçları ve düzeltilen hatalar: [`phase0/DURUM.md`](phase0/DURUM.md). Yapılacaklar: [`TODO.md`](TODO.md).
+**Durum:** Android uygulaması gerçek cihazda uçtan uca çalışıyor. İlk Python
+prototipi görevini tamamladığı için açık kaynak ağacından kaldırıldı; deneylerin
+sonuçları bu belgede, özgün dosyaları Git geçmişinde duruyor. Yapılacaklar:
+[`TODO.md`](TODO.md).
 
 ---
 
@@ -341,7 +343,8 @@ Son satır belirleyici oldu: kullanıcı deneyimi kısıtı teknik sağlamlıkta
 
 ### Phase 0 — Doğrulama (Android kodu yazmadan) ✅ **TAMAMLANDI**
 
-PC'de Python. Detaylı protokol: [`phase0/README.md`](phase0/README.md), sonuçlar: [`phase0/DURUM.md`](phase0/DURUM.md).
+İlk doğrulama PC'de Python ile yapıldı. Prototip yayın ağacından kaldırıldı;
+detaylı protokol ve ham sonuçlar Git geçmişinde korunuyor.
 
 Elde edilenler:
 - **R1 kapandı** — p95 234 ms kayma, sorgu limiti yok
@@ -355,7 +358,7 @@ Elde edilenler:
 
 Teknik riskler kapandığı için kalan sıra kullanıcı deneyimine göredir:
 
-1. ✅ **Proje iskeleti** — `android/`, tek modül, minSdk 28 / target 35
+1. ✅ **Proje iskeleti** — depo kökünde tek Android modülü, minSdk 28 / target 35
 2. ✅ **İlk dikey dilim: pozisyon takipçisi.** `LoungeClient` + `PositionTracker` + foreground service. **R3 kapandı.**
    Buradan çıkan mimari kural: **oturum Activity'de yaşayamaz.** YouTube öne geldiği anda Android bizim Activity'mizi yok ediyor ve takip ölüyor. Süreç hayatta kalıyor ama coroutine'ler iptal oluyor. Servis zorunlu, ekran yalnızca bir ayar paneli.
 3. 🟡 **ADB'siz kimlik bilgileri** — API anahtarı UI'sı, Keystore saklama, kaydetmeden
@@ -419,4 +422,6 @@ Ek provider'lar, reklam yönetimi (R5), boot davranışı ve mağaza hazırlığ
 
 ## 12. Lisans notu
 
-Satış planı yok; en fazla open source. SmartTube'un standart dışı lisansı artık ilgisiz — o yolu kullanmıyoruz. Kendi kodumuz özgürce lisanslanabilir; `pyytlounge` (Phase 0) ve NewPipeExtractor (Phase 1) lisansları yayın öncesi kontrol edilmeli.
+Proje GPL-3.0-or-later altında açık kaynak olarak yayımlanacak. Bu seçim,
+uygulamaya bağlanan GPL-3.0-or-later lisanslı NewPipeExtractor ile uyumludur ve
+dağıtılan türevlerin kaynak kodunun açık kalmasını sağlar.

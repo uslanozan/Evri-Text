@@ -1,8 +1,22 @@
-__pycache__/
-*.py[cod]
-.venv/
-venv/
-
+# Local developer configuration. The Android app receives its Gemini key through
+# the TV UI; this file is only used by opt-in integration tests.
 .env
-phase0/lounge_auth.json
-phase0/out/
+
+# Android / Gradle
+*.iml
+.gradle/
+.kotlin/
+.idea/
+build/
+local.properties
+.cxx/
+captures/
+.externalNativeBuild/
+*.apk
+*.aab
+*.keystore
+!debug.keystore
+
+# Local leftovers from the retired Python prototype. The tracked prototype was
+# removed after the Android port; this keeps old measurements and pairing data private.
+/phase0/

@@ -1,6 +1,6 @@
 # TODO
 
-Madde madde, tek satır. Ayrıntı gerekirse `DESIGN.md` veya `phase0/DURUM.md`.
+Madde madde, tek satır. Ayrıntı gerekirse `DESIGN.md`.
 `[x]` bitti, `[~]` kısmen, `[ ]` bekliyor.
 
 ## Durum
@@ -26,7 +26,8 @@ Mağaza hazırlığı değil, günlük kullanım ve açık kaynak yayın önceli
 6. **Kullanışlı ayarlar:** hedef dil, model ve çeviri üslubu
 7. **Önbellek kontrolü:** kullanılan alan, temizleme ve boyut sınırı
 8. **R10/Shorts deneyi:** MediaSession ile Lounge'a yalnız gerektiğinde bağlanma
-9. **Açık kaynak yayını:** README, ekran görüntüleri, lisanslar, imzalı APK
+9. **Açık kaynak yayını:** README, gizlilik metni ve GPL lisansı tamamlandı;
+   ekran görüntüleri ile imzalı APK bekliyor
 
 Kurulum sihirbazı, geniş cihaz matrisi ve CI şu an hedef değil.
 
@@ -46,11 +47,16 @@ Kurulum sihirbazı, geniş cihaz matrisi ve CI şu an hedef değil.
 
 ### Ayarlar
 
+- [x] Arayüz yerelleştirmesi — Android kaynak sistemiyle TV dilini otomatik izleyen
+  Türkçe ve İngilizce metinler; yeni diller yalnız `values-<dil>` eklenerek büyüyebilir
 - [~] Altyazı görünümü: 6 yazı rengi, 4 boyut, 4 arka plan seviyesi,
   3 dikey konum ve canlı önizleme tamamlandı; gerçek video üstünde toplu cihaz testi
   bekliyor. Özel renk, gölge ve maksimum genişlik ayarı daha sonra eklenebilir
 - [ ] Hedef dil, model ve çeviri üslubu seçimi. Manuel offset kullanıcıya
   yüklenmeyecek; senkron bozulursa uygulama tarafında düzeltilecek
+- [x] Kaynak dili otomatik seçme — İngilizceye özel kısıt kaldırıldı; Fransızca ve
+  Arapça videolar gerçek TV'de kaynak dil seçimi, Gemini çevirisi ve overlay'e cue
+  teslimiyle uçtan uca doğrulandı
 - [ ] "Önbelleği temizle" düğmesi + kullanılan alanı göster
 
 ### Önbellek
@@ -190,11 +196,9 @@ olmadan eski davranış korunuyor.
 
 ## Genel
 
-- [ ] `README.md` (kök) yaz: proje ne, kim için, nasıl kurulur
-- [ ] `phase0` tarafına birim testleri (Kotlin tarafında var, Python tarafında yok)
-- [ ] `01_preflight.py --install-tvoverlay` her çalıştırmada APK'yı yeniden indiriyor
+- [x] `README.md` (kök): amaç, kurulum, derleme, mimari ve sınırlamalar
 - [ ] `platform-tools`'u `Downloads`'tan kalıcı bir yere taşı
-- [ ] İş planı konuşması: mağazaya çıkma, lisans, kimin kurabileceği
+- [x] Açık kaynak lisansı ve dağıtım sırası — GPL-3.0-or-later, önce GitHub
 
 ---
 
@@ -209,7 +213,7 @@ olmadan eski davranış korunuyor.
 - [x] Model kararı — canlı yolda `3.5-flash-lite` (30 cümlelik chunk 3,0 sn vs `3.6-flash` 15,2 sn)
 
 ### Phase 1
-- [x] Proje iskeleti — `android/`, tek modül, leanback launcher, minSdk 28 / target 35, Gradle 8.13 + AGP 8.9 + Kotlin 2.1
+- [x] Proje iskeleti — depo kökünde tek modül, leanback launcher, minSdk 28 / target 35, Gradle 8.13 + AGP 8.9 + Kotlin 2.1
 - [x] **Lounge protokolü Kotlin/OkHttp portu (R3 KAPANDI)** — cihazda doğrulandı
 - [x] `PositionTracker` portu — bağımlılıksız, enjekte edilebilir `Clock`
 - [x] Periyodik `getNowPlaying` çapası (20 sn) ve yeniden abone olma döngüsü — ikisi de zorunlu, opsiyonel değil
