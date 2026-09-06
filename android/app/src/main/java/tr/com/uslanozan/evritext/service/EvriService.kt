@@ -11,6 +11,7 @@ import android.util.Log
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -208,8 +209,14 @@ class EvriService : LifecycleService() {
                 }
                 val videoId = session.tracker.videoId
                 if (videoId != null && videoId != builtVideoId) {
+                    // The previous request may be inside a blocking network call and
+                    // return after cancellation. Cancel it now; buildFor also guards
+                    // every publication so a late response can never restore cues
+                    // belonging to the video the viewer already left.
+                    job?.cancel()
                     builtVideoId = videoId
                     cues = emptyList()
+                    notice.dismiss()
                     job = launch { buildFor(activeEngine, session, videoId) }
                 } else if (videoId != null && job == null && cues.isEmpty()) {
                     // Same video, but the previous build was cancelled before it
@@ -230,6 +237,11 @@ class EvriService : LifecycleService() {
         Log.i(TAG, "building subtitles for $videoId from ${startMs}ms")
         val started = System.currentTimeMillis()
         var firstCues = true
+        val buildJob = currentCoroutineContext()[Job]
+
+        fun isCurrentBuild(): Boolean =
+            buildJob?.isActive == true && builtVideoId == videoId &&
+                session.tracker.videoId == videoId && settings.enabled.value
 
         // Several seconds of nothing reads as a broken app, so say what is happening —
         // this notice is the only channel we have while YouTube is in front. But a
@@ -237,10 +249,13 @@ class EvriService : LifecycleService() {
         // for 200 ms is worse than staying quiet: wait to see if it is actually slow.
         val preparing = CoroutineScope(currentCoroutineContext()).launch {
             delay(PREPARING_NOTICE_AFTER_MS)
-            if (cues.isEmpty()) notice.show(getString(R.string.notice_preparing), 20_000)
+            if (isCurrentBuild() && cues.isEmpty()) {
+                notice.show(getString(R.string.notice_preparing), 20_000)
+            }
         }
 
         val result = engine.build(videoId, startMs) { partial ->
+            if (!isCurrentBuild()) return@build
             cues = partial
             if (firstCues && partial.isNotEmpty()) {
                 firstCues = false
@@ -250,6 +265,8 @@ class EvriService : LifecycleService() {
             }
         }
         preparing.cancel()
+        currentCoroutineContext().ensureActive()
+        if (!isCurrentBuild()) return
 
         when (result) {
             is SubtitleEngine.Result.Ready -> {

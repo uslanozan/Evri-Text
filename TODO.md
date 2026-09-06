@@ -23,7 +23,7 @@ Mağaza hazırlığı değil, günlük kullanım ve açık kaynak yayın önceli
    gereksiz overlay güncellemelerini önleme
 4. **Anlaşılır durumlar:** teknik hata yerine neden + kullanıcının yapacağı işlem
 5. **Hızlı aç/kapa:** önce izinsiz seçenekler; AccessibilityService yalnız isteğe bağlı
-6. **Kullanışlı ayarlar:** offset, hedef dil, model ve çeviri üslubu
+6. **Kullanışlı ayarlar:** hedef dil, model ve çeviri üslubu
 7. **Önbellek kontrolü:** kullanılan alan, temizleme ve boyut sınırı
 8. **R10/Shorts deneyi:** MediaSession ile Lounge'a yalnız gerektiğinde bağlanma
 9. **Açık kaynak yayını:** README, ekran görüntüleri, lisanslar, imzalı APK
@@ -45,10 +45,11 @@ Kurulum sihirbazı, geniş cihaz matrisi ve CI şu an hedef değil.
 
 ### Ayarlar
 
-- [~] Altyazı görünümü: beyaz/sarı/turkuaz yazı, 4 boyut, 4 arka plan seviyesi,
+- [~] Altyazı görünümü: 6 yazı rengi, 4 boyut, 4 arka plan seviyesi,
   3 dikey konum ve canlı önizleme tamamlandı; gerçek video üstünde toplu cihaz testi
   bekliyor. Özel renk, gölge ve maksimum genişlik ayarı daha sonra eklenebilir
-- [ ] Offset (altyazı gecikmesi), yeniden çapa aralığı, hedef dil, model seçimi
+- [ ] Hedef dil, model ve çeviri üslubu seçimi. Manuel offset kullanıcıya
+  yüklenmeyecek; senkron bozulursa uygulama tarafında düzeltilecek
 - [ ] "Önbelleği temizle" düğmesi + kullanılan alanı göster
 
 ### Önbellek
@@ -69,10 +70,16 @@ Kurulum sihirbazı, geniş cihaz matrisi ve CI şu an hedef değil.
   **Karar bekliyor:** Play Store erişilebilirlik iznine sert bakıyor. Bu uygulamanın amacı gerçekten erişilebilirlik — gerekçe yazılabilir ama garanti değil. Mağazaya çıkılmayacaksa risk yok.
   **Gerekçe:** Shorts'a girmeden önce kapatmak gerekiyor (R10). Türkçe video meselesi otomatik tespitle çözüldü, bu çözülemedi.
 
+  **Mi Box deneyi (2026-09-06):** Xiaomi TV+ tuşu ham girişte `KEY_WWW`
+  (`KEYCODE_EXPLORER`) üretiyor fakat üretici uygulaması tuşu normal Activity'den ve
+  etkin `AccessibilityService` key filtresinden önce tüketiyor. Servis açıkken de
+  Xiaomi TV+ açıldı; deneysel kısayol kodu geri çıkarıldı. Kısayol şimdilik ertelendi.
+
 ### Kalite
 
-- [ ] Video değişince eski altyazıyı hemen temizle; sarma ve hızlı video değişiminde
-  artık gerekmeyen çeviri işlerinin iptal edildiğini kullanıcı akışında doğrula
+- [~] Video değişince eski altyazı hemen temizleniyor, önceki çeviri işi iptal ediliyor
+  ve geç dönen sonuçların yeni videoya yazılması engelleniyor; hızlı ve önbelleksiz
+  video değişimini kullanıcı akışında doğrula
 - [ ] Overlay'i yalnız metin değiştiğinde güncelleme mevcut; geçişlerde titreme ve boşlukları ölç
 - [~] Ağ, geçersiz API anahtarı, kota, caption ve kısmi çeviri hataları ayrı ve eyleme
   dönük mesajlara ayrıldı. Hazırlanıyor/çeviriliyor durumuna sayısal ilerleme bekliyor
