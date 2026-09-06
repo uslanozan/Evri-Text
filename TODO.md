@@ -60,7 +60,8 @@ Kurulum sihirbazı, geniş cihaz matrisi ve CI şu an hedef değil.
 
 ### Servis
 
-- [ ] Boot'ta otomatik başlama
+- Otomatik boot başlangıcı yapılmayacak; uygulama kullanıcı açmadıkça kendi kendine
+  devreye girmemeli
 - [ ] Pil/doze davranışı: `deviceidle whitelist` gerekli mi, kullanıcıdan nasıl istenir
 
 ### Kısayol

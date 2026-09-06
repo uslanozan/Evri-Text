@@ -33,20 +33,6 @@
             android:textAppearance="@style/TextAppearance.EvriText.RowValue"
             tools:text="Bağlı değil" />
 
-        <!-- Phase 1 step C only: proves the Lounge port works before anything is
-             built on top of it. Comes out once the overlay renders real subtitles. -->
-        <TextView
-            android:id="@+id/probeLine"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="32dp"
-            android:padding="16dp"
-            android:background="@drawable/row_background"
-            android:fontFamily="monospace"
-            android:textColor="@color/primary"
-            android:textSize="16sp"
-            tools:text="video —\npozisyon —" />
-
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -99,22 +85,6 @@
 
         <include
             android:id="@+id/rowSubtitlePosition"
-            layout="@layout/item_setting_row" />
-
-        <include
-            android:id="@+id/rowTargetLang"
-            layout="@layout/item_setting_row" />
-
-        <include
-            android:id="@+id/rowModel"
-            layout="@layout/item_setting_row" />
-
-        <include
-            android:id="@+id/rowOffset"
-            layout="@layout/item_setting_row" />
-
-        <include
-            android:id="@+id/rowCache"
             layout="@layout/item_setting_row" />
 
     </LinearLayout>

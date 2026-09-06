@@ -351,17 +351,6 @@ class EvriService : LifecycleService() {
         }
     }
 
-    private fun formatSeconds(total: Double): String {
-        val whole = total.toLong().coerceAtLeast(0)
-        return String.format(
-            Locale.US,
-            "%d:%02d:%02d",
-            whole / 3600,
-            (whole % 3600) / 60,
-            whole % 60,
-        )
-    }
-
     private fun buildNotification(text: String): Notification {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(

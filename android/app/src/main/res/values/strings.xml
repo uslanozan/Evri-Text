@@ -59,11 +59,6 @@
     <string name="subtitle_position_bottom">Alt</string>
     <string name="subtitle_position_raised">Biraz yukarı</string>
     <string name="subtitle_position_high">Yukarı</string>
-    <string name="setting_target_lang">Hedef dil</string>
-    <string name="setting_model">Model</string>
-    <string name="setting_offset">Altyazı gecikmesi</string>
-    <string name="setting_cache">Önbellek</string>
-
     <string name="pairing_title">TV ile eşleştir</string>
     <string name="pairing_hint">YouTube → Ayarlar → \"TV kodu ile bağla\" ekranındaki 12 haneli kodu gir.</string>
     <string name="pairing_input_hint">12 haneli TV kodu</string>
