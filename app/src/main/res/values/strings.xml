@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="tr">
     <!-- Default UI language: Turkish. -->
-    <string name="app_name">Evri-Text</string>
+    <string name="app_name">Evri Text</string>
     <string name="status_title">Durum</string>
     <string name="status_not_connected">Bağlı değil</string>
     <string name="status_connecting">Bağlanıyor…</string>
@@ -23,14 +23,14 @@
     <string name="setting_youtube_detection_on">Etkin</string>
     <string name="setting_youtube_detection_off">İzin ver</string>
     <string name="youtube_detection_dialog_title">YouTube algılama izni</string>
-    <string name="youtube_detection_dialog_message">Bu özellik normal videolar arasında bağlantıyı keserek Shorts’un ve YouTube önerilerinin bozulmasını önler. Android bunu “Bildirim erişimi” olarak adlandırır; Evri-Text bildirimlerinizi okumaz veya saklamaz, yalnızca YouTube’un oynatma durumunu görür.</string>
+    <string name="youtube_detection_dialog_message">Bu özellik normal videolar arasında bağlantıyı keserek Shorts’un ve YouTube önerilerinin bozulmasını önler. Android bunu “Bildirim erişimi” olarak adlandırır; Evri Text bildirimlerinizi okumaz veya saklamaz, yalnızca YouTube’un oynatma durumunu görür.</string>
     <string name="action_open_settings">Ayarları aç</string>
     <string name="notice_preparing">Altyazı hazırlanıyor…</string>
     <string name="notice_already_target">Video zaten Türkçe — altyazı gerekmiyor</string>
     <string name="notice_no_captions">Bu videoda altyazı yok</string>
     <string name="notice_failed">Altyazı alınamadı</string>
     <string name="notice_network_failed">İnternet bağlantısı kurulamadı — bağlantıyı kontrol edin</string>
-    <string name="notice_api_key_failed">API anahtarı kabul edilmedi — Evri-Text ayarlarından kontrol edin</string>
+    <string name="notice_api_key_failed">API anahtarı kabul edilmedi — Evri Text ayarlarından kontrol edin</string>
     <string name="notice_quota_failed">Gemini kullanım sınırına ulaşıldı — biraz sonra tekrar deneyin</string>
     <string name="notice_caption_failed">YouTube altyazısı alınamadı — videoyu yeniden açmayı deneyin</string>
     <string name="notice_translation_partial">Bazı cümleler çevrilemedi — kaynak metin gösteriliyor</string>

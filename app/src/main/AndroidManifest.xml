@@ -2,13 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <!-- Granted once over adb: appops set <pkg> SYSTEM_ALERT_WINDOW allow.
-         Android TV has no MANAGE_OVERLAY_PERMISSION screen to send the user to. -->
+    <!-- Required to draw translated subtitles above the YouTube app. -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- A TV box has no touchscreen and no camera; without these the Play Store
@@ -23,10 +20,13 @@
     <application
         android:allowBackup="false"
         android:banner="@drawable/tv_banner"
-        android:icon="@drawable/tv_banner"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="false"
+        android:icon="@drawable/logo_mark"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/Theme.EvriText">
+        android:theme="@style/Theme.EvriText"
+        android:usesCleartextTraffic="false">
 
         <activity
             android:name=".ui.MainActivity"

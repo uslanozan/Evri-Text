@@ -13,3 +13,12 @@
 -dontwarn org.conscrypt.**
 -dontwarn org.bouncycastle.**
 -dontwarn org.openjsse.**
+
+# NewPipeExtractor brings Rhino for YouTube's JavaScript challenges. These optional
+# desktop-Java integration paths are not available or invoked on Android.
+-dontwarn java.beans.BeanDescriptor
+-dontwarn java.beans.BeanInfo
+-dontwarn java.beans.IntrospectionException
+-dontwarn java.beans.Introspector
+-dontwarn java.beans.PropertyDescriptor
+-dontwarn javax.script.ScriptEngineFactory

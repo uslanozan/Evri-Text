@@ -22,5 +22,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Evri-Text"
+rootProject.name = "EvriText"
 include(":app")

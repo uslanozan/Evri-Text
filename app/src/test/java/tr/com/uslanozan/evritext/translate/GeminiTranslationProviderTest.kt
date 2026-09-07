@@ -63,7 +63,7 @@ class GeminiTranslationProviderTest {
                 sentences = listOf(source),
                 sourceLang = language,
                 targetLang = "tr",
-                context = TranslationContext(videoTitle = "Evri-Text language test"),
+                context = TranslationContext(videoTitle = "Evri Text language test"),
             ).single()
 
             println("$language -> tr: $translated")

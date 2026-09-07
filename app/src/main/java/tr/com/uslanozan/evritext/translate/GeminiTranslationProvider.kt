@@ -117,9 +117,10 @@ class GeminiTranslationProvider(
     }
 
     private fun request(body: String): String {
-        val url = "$ENDPOINT/$model:generateContent?key=$apiKey"
         val request = Request.Builder()
-            .url(url)
+            .url("$ENDPOINT/$model:generateContent")
+            // API keys in URLs can leak into proxy and access logs.
+            .header("x-goog-api-key", apiKey)
             .post(body.toRequestBody("application/json".toMediaType()))
             .build()
         http.newCall(request).execute().use { response ->

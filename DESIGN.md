@@ -1,4 +1,4 @@
-# Evri-Text — Tasarım Dokümanı
+# Evri Text — Tasarım Dokümanı
 
 Resmî YouTube uygulamasının üzerine, yapay zeka ile üretilmiş Türkçe altyazı bindiren bağımsız bir Android TV uygulaması.
 
@@ -44,7 +44,7 @@ Evde YouTube izlenirken İngilizce videolarda babam takip edebiliyor, annem edem
    └──────────────┬───────────────────┘
                   │ Lounge API  (video ID + oynatma pozisyonu)
    ┌──────────────▼───────────────────┐
-   │   Evri-Text (bağımsız uygulama)  │
+   │   Evri Text (bağımsız uygulama)  │
    │                                  │
    │   LoungeClient                   │  ← pozisyon takibi
    │   CaptionSource / SttProvider    │  ← altyazı kaynağı
@@ -319,7 +319,7 @@ Son satır tasarımı değiştiriyor. Mevcut hat **tüm video çevrilene kadar h
 | **R7** | ASR caption kalitesi kötüyse çeviri de kötü olur | ✅ **KAPANDI.** ASR kaynaklı çeviri VLC'de kontrol edildi ve **hedef kullanıcı takip edebildi** — projenin tek gerçek kabul kriteri. Kalan kusurlar kozmetik: yer yer kelime hatası, cue'ların ~%11'i iki satırı aşıyor, diyalog çizgileri tutarsız |
 | **R8** | Kurulum bir defalık ADB gerektiriyor; `adb tcpip 5555` reboot'ta kalıcı değil | ✅ Doğrulandı. Bu cihazda ayrı "ağ üzerinden hata ayıklama" seçeneği yoktu ama USB hata ayıklama açıkken 5555 zaten dinliyordu. İzin "her zaman" verilince kalıcı |
 | **R10b** | **Bağlıyken video sonu ekranı kayboluyor.** Video bitince "SIRADAKİ / önerilenler" gelmiyor, ana sayfaya dönülüyor | ✅ **KAPANDI.** İsteğe bağlı MediaSession izniyle video `STOPPED/null` olduğunda Lounge hemen ayrılıyor. Gerçek videoda sona kadar izlendi ve önerilenler ekranının geri geldiği doğrulandı |
-| **R10** | **Bağlıyken Shorts oynatılamıyor.** Lounge bir yayın protokolü ve Shorts o akışta desteklenmiyor; ekran bağlı bir kumanda görünce "cihazın bağlantısını kesin" diyor ve Shorts'tan çıkıyor | 🟡 **Büyük ölçüde azaltıldı.** MediaSession kapısı normal video ayrıntıları görünürken bağlanıyor, oynatma ekranı kapanınca ayrılıyor ve metadata'sı boş olan Shorts'ta geri bağlanmıyor. Normal video → Shorts doğrudan bağlantısında YouTube diyaloğu `STOPPED` olayından önce açtığı için bir kez "Bağlantıyı kes" gerekebiliyor; sonrasında Evri-Text anahtarı açık kalıyor ve normal videoda otomatik geri bağlanıyor |
+| **R10** | **Bağlıyken Shorts oynatılamıyor.** Lounge bir yayın protokolü ve Shorts o akışta desteklenmiyor; ekran bağlı bir kumanda görünce "cihazın bağlantısını kesin" diyor ve Shorts'tan çıkıyor | 🟡 **Büyük ölçüde azaltıldı.** MediaSession kapısı normal video ayrıntıları görünürken bağlanıyor, oynatma ekranı kapanınca ayrılıyor ve metadata'sı boş olan Shorts'ta geri bağlanmıyor. Normal video → Shorts doğrudan bağlantısında YouTube diyaloğu `STOPPED` olayından önce açtığı için bir kez "Bağlantıyı kes" gerekebiliyor; sonrasında Evri Text anahtarı açık kalıyor ve normal videoda otomatik geri bağlanıyor |
 | **R9** | **Sağlayıcı modeli emekliye ayırıyor.** `gemini-2.5-flash-lite` yeni key'lere kapatıldı, kod 404 aldı | Model adı yapılandırma değeri, koda gömülü değil. Ayarlarda seçilebilir olacak |
 
 ---

@@ -26,8 +26,8 @@ Mağaza hazırlığı değil, günlük kullanım ve açık kaynak yayın önceli
 6. **Kullanışlı ayarlar:** hedef dil, model ve çeviri üslubu
 7. **Önbellek kontrolü:** kullanılan alan, temizleme ve boyut sınırı
 8. **R10/Shorts deneyi:** MediaSession ile Lounge'a yalnız gerektiğinde bağlanma
-9. **Açık kaynak yayını:** README, gizlilik metni ve GPL lisansı tamamlandı;
-   ekran görüntüleri ile imzalı APK bekliyor
+9. **Açık kaynak yayını:** README, gizlilik/güvenlik metinleri, GPL ve üçüncü taraf
+   bildirimleri, logo ve marka politikası tamamlandı; ekran görüntüleri ile imzalı APK bekliyor
 
 Kurulum sihirbazı, geniş cihaz matrisi ve CI şu an hedef değil.
 
@@ -126,7 +126,7 @@ olmadan eski davranış korunuyor.
   çıkabildiği için cihazda ölçülen boş metadata ayrımı kullanılıyor. Normal videodan
   doğrudan Shorts bağlantısına atlamak hâlâ uyarıyı bir kez gösteriyor: YouTube uyarıyı
   MediaSession'ın `STOPPED` olayından önce açıyor. Düğmeye basınca Shorts açılıyor ve
-  Evri-Text açık kalarak sonraki normal videoda yeniden bağlanabiliyor
+  Evri Text açık kalarak sonraki normal videoda yeniden bağlanabiliyor
 - [~] MediaSession pozisyonu da kullanılabiliyor. Eşzamanlı cihaz koşularında fark
   sabit kaldı; duraklatmada 0 ms, ileri sarma yerleştikten sonra yaklaşık +134 ms ölçüldü.
   Lounge'ı yalnız video kimliğini almak için kısa süreli kullanmaya geçmeden önce reklam
@@ -157,7 +157,7 @@ olmadan eski davranış korunuyor.
   hem önizlemede hem YouTube overlay'inde anında ve okunaklı değiştiğini doğrula
 - [~] **Toplu hata testi** — yanlış API anahtarı mesajı doğrulandı; internet kapalıyken
   doğru mesajın çıktığını ve başarısız çevirinin önbelleğe yazılmadığını doğrula
-- [x] **"Bağlantıyı kes" düğmesi** — Shorts açılıyor, Evri-Text Shorts boyunca ayrık
+- [x] **"Bağlantıyı kes" düğmesi** — Shorts açılıyor, Evri Text Shorts boyunca ayrık
   kalıyor; akıllı bağlantı etkinken altyazı anahtarı açık kalıp sonraki normal videoda
   yeniden kullanılabiliyor
 - [x] **Video sonu ekranı** — MediaSession kapısı video sonunda Lounge'ı ayırdı ve
@@ -197,6 +197,10 @@ olmadan eski davranış korunuyor.
 ## Genel
 
 - [x] `README.md` (kök): amaç, kurulum, derleme, mimari ve sınırlamalar
+- [x] Logo ve uygulama kimliği — SVG marka kaynağı, Android vector launcher ikonu ve
+  TV banner tamamlandı; paket kimliği `tr.com.uslanozan.evritext` olarak doğrulandı
+- [x] Yayın güvenliği — Git geçmişinde anahtar taraması, en az izin, TLS zorlaması,
+  yedekleme engeli, güvenlik politikası ve üçüncü taraf lisans bildirimi tamamlandı
 - [ ] `platform-tools`'u `Downloads`'tan kalıcı bir yere taşı
 - [x] Açık kaynak lisansı ve dağıtım sırası — GPL-3.0-or-later, önce GitHub
 
@@ -227,5 +231,5 @@ olmadan eski davranış korunuyor.
 - [x] Aç/kapa anahtarı — varsayılan kapalı; kapalıyken bağlantı da kesiliyor
 - [x] Hedef dil tespiti — otomatik Türkçe altyazı varsa video zaten Türkçe, uygulama duruyor
 - [x] Durum bildirimleri — hazırlanıyor / zaten Türkçe / altyazı yok / alınamadı
-- [x] 31 birim testi — tracker, VTT, cümle birleştirme, bozuk model cevapları, auth dosyası
+- [x] 62 birim testi — tracker, VTT, cümle birleştirme, bozuk model cevapları, auth dosyası
 - [x] `DESIGN.md` Phase 0 ve Phase 1 bulgularıyla güncellendi

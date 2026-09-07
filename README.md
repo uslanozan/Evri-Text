@@ -1,14 +1,18 @@
-# Evri-Text
+<p align="center">
+  <img src="docs/brand/evri-text-mark.svg" width="128" alt="Evri Text logosu">
+</p>
+
+# Evri Text
 
 Android TV'deki resmî YouTube uygulamasında oynatılan videolara yapay zekâ destekli
 Türkçe altyazı ekleyen açık kaynak yardımcı uygulama.
 
-Evri-Text videoyu değiştirmez veya ayrı bir oynatıcı kullanmaz. YouTube'da oynayan
+Evri Text videoyu değiştirmez veya ayrı bir oynatıcı kullanmaz. YouTube'da oynayan
 videoyu takip eder, erişilebilir altyazı parçasını Gemini ile Türkçeye çevirir ve
 sonucu videoyla eşzamanlı bir ekran katmanında gösterir.
 
 > [!IMPORTANT]
-> Proje aktif geliştirme aşamasındadır. Evri-Text; Google, YouTube veya Gemini
+> Proje aktif geliştirme aşamasındadır. Evri Text; Google, YouTube veya Gemini
 > tarafından geliştirilmiş, desteklenmiş ya da onaylanmış değildir.
 
 ## Neler sunuyor?
@@ -33,16 +37,16 @@ sonucu videoyla eşzamanlı bir ekran katmanında gösterir.
 
 ## Kurulum ve kullanım
 
-1. Evri-Text APK'sını TV'ye kurup uygulamayı açın.
+1. Evri Text APK'sını TV'ye kurup uygulamayı açın.
 2. YouTube'da **Ayarlar → TV koduyla bağla** yolundan bir kod oluşturun.
-3. Kodu Evri-Text'teki eşleştirme alanına girin.
+3. Kodu Evri Text'teki eşleştirme alanına girin.
 4. Gemini API anahtarınızı ekleyin. Uzun anahtarları girmek için Google TV mobil
    kumandasının klavyesini kullanabilirsiniz.
 5. Ekran üzerinde gösterim iznini verin.
 6. İsterseniz **Akıllı YouTube bağlantısı** için bildirim erişimini etkinleştirin.
-7. Evri-Text altyazısını açın ve YouTube'da bir video oynatın.
+7. Evri Text altyazısını açın ve YouTube'da bir video oynatın.
 
-Evri-Text bildirimlerin içeriğini okumaz. Bildirim erişimini yalnızca YouTube'un aktif
+Evri Text bildirimlerin içeriğini okumaz. Bildirim erişimini yalnızca YouTube'un aktif
 bir medya oturumu olup olmadığını anlamak ve uygulamalar arasında geçiş yapılınca
 bağlantıyı doğru yönetmek için kullanır.
 
@@ -87,7 +91,7 @@ hedefi Türkçedir.
 ## Gizlilik ve sınırlamalar
 
 Veri akışı ve kullanılan servisler [PRIVACY.md](PRIVACY.md) içinde açıklanmıştır.
-Evri-Text resmî olmayan YouTube uç noktalarına ve NewPipeExtractor'a dayanır;
+Evri Text resmî olmayan YouTube uç noktalarına ve NewPipeExtractor'a dayanır;
 YouTube'daki değişiklikler uygulamayı geçici olarak bozabilir. Yalnızca erişilebilir
 bir altyazı parçası bulunan videolar çevrilebilir.
 
@@ -103,6 +107,10 @@ Paket kimliği `tr.com.uslanozan.evritext` değeridir. Debug derlemeleri cihazda
 
 ## Lisans
 
-Evri-Text, [GNU General Public License v3.0 veya sonrası](LICENSE) altında dağıtılır.
+Evri Text, [GNU General Public License v3.0 veya sonrası](LICENSE) altında dağıtılır.
 Üçüncü taraf bileşenler kendi lisanslarına tabidir. Altyazı çıkarma için kullanılan
 NewPipeExtractor da GPL-3.0-or-later lisanslıdır.
+
+Ayrıntılar için [üçüncü taraf bildirimlerine](THIRD_PARTY_NOTICES.md) ve
+[marka politikasına](TRADEMARKS.md) bakın. Güvenlik açıklarını bildirme yöntemi
+[SECURITY.md](SECURITY.md) içinde açıklanmıştır.

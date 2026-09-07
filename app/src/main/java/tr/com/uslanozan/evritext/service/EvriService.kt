@@ -404,7 +404,7 @@ class EvriService : LifecycleService() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "Evri-Text",
+                "Evri Text",
                 NotificationManager.IMPORTANCE_LOW,
             )
             getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
@@ -443,7 +443,7 @@ class EvriService : LifecycleService() {
     companion object {
         private const val TAG = "EvriService"
         private const val PROBE_TAG = "Probe"
-        private const val DEVICE_NAME = "Evri-Text"
+        private const val DEVICE_NAME = "Evri Text"
         private const val ACTION_RELOAD_PAIRING =
             "tr.com.uslanozan.evritext.action.RELOAD_PAIRING"
         private const val ACTION_SET_SETTINGS_VISIBLE =
