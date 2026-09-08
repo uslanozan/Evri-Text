@@ -20,3 +20,6 @@ captures/
 # Local leftovers from the retired Python prototype. The tracked prototype was
 # removed after the Android port; this keeps old measurements and pairing data private.
 /phase0/
+
+# Original room photo used to prepare the public, perspective-corrected screenshot.
+/docs/screenshots/tv-photo-original.jpeg

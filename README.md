@@ -2,6 +2,10 @@
   <img src="docs/brand/evri-text-mark.svg" width="128" alt="Evri Text logosu">
 </p>
 
+<p align="center">
+  <strong>Türkçe</strong> · <a href="README_EN.md">English</a>
+</p>
+
 # Evri Text
 
 Android TV'deki resmî YouTube uygulamasında oynatılan videolara yapay zekâ destekli
@@ -14,6 +18,21 @@ sonucu videoyla eşzamanlı bir ekran katmanında gösterir.
 > [!IMPORTANT]
 > Proje aktif geliştirme aşamasındadır. Evri Text; Google, YouTube veya Gemini
 > tarafından geliştirilmiş, desteklenmiş ya da onaylanmış değildir.
+
+## Ekran görüntüleri
+
+<p align="center">
+  <img src="docs/screenshots/settings.png" width="49%" alt="Evri Text ayarlar ekranı">
+  <img src="docs/screenshots/api-key.png" width="49%" alt="Gemini API anahtarı giriş ekranı">
+</p>
+
+<p align="center"><sub>Ayarlar ve TV klavyesiyle güvenli API anahtarı girişi</sub></p>
+
+<p align="center">
+  <img src="docs/screenshots/youtube-subtitles.jpg" width="100%" alt="YouTube videosu üzerinde Evri Text Türkçe altyazısı">
+</p>
+
+<p align="center"><sub>İngilizce bir <a href="https://www.youtube.com/watch?v=7ZhdXgRfxHI">BBC Earth videosunda</a> Evri Text tarafından oluşturulan Türkçe altyazı</sub></p>
 
 ## Neler sunuyor?
 
