@@ -27,7 +27,7 @@ Mağaza hazırlığı değil, günlük kullanım ve açık kaynak yayın önceli
 7. **Önbellek kontrolü:** kullanılan alan, temizleme ve boyut sınırı
 8. **R10/Shorts deneyi:** MediaSession ile Lounge'a yalnız gerektiğinde bağlanma
 9. **Açık kaynak yayını:** README, gizlilik/güvenlik metinleri, GPL ve üçüncü taraf
-   bildirimleri, logo ve marka politikası tamamlandı; ekran görüntüleri ile imzalı APK bekliyor
+   bildirimleri, logo, marka politikası ve ekran görüntüleri tamamlandı; imzalı APK bekliyor
 
 Kurulum sihirbazı, geniş cihaz matrisi ve CI şu an hedef değil.
 
@@ -140,7 +140,8 @@ olmadan eski davranış korunuyor.
 - [x] Otomatik oynatma — video bitince kendiliğinden sonrakine **geçmiyor** (babanın şikâyeti çözüldü)
 - [x] Aç/kapa anahtarı — overlay anında kayboluyor, YouTube'un "bağlı cihaz" göstergesi de gidiyor
 - [x] Görsel switch — odakta net, OK ile dönüyor
-- [x] Hedef dil tespiti — Türkçe videoda duruyor, "Video zaten Türkçe" bildirimi çıkıyor
+- [x] Hedef dil tespiti — Türkçe ses ile başka dildeki videoda hazır Türkçe altyazı
+  ayrılıyor ve kullanıcıya doğru neden gösteriliyor
 - [x] Hazırlanıyor bildirimi — yeni videoda çıkıyor, önbellektekinde çıkmıyor
 - [x] Önbellek — daha önce izlenen video anında geliyor
 - [x] Shorts, altyazı **kapalıyken** sorunsuz
@@ -199,6 +200,8 @@ olmadan eski davranış korunuyor.
 - [x] `README.md` (kök): amaç, kurulum, derleme, mimari ve sınırlamalar
 - [x] Logo ve uygulama kimliği — SVG marka kaynağı, Android vector launcher ikonu ve
   TV banner tamamlandı; paket kimliği `tr.com.uslanozan.evritext` olarak doğrulandı
+- [x] Türkçe ve İngilizce README ile ayarlar, API anahtarı ve gerçek video üzerinde
+  Türkçe altyazı ekran görüntüleri
 - [x] Yayın güvenliği — Git geçmişinde anahtar taraması, en az izin, TLS zorlaması,
   yedekleme engeli, güvenlik politikası ve üçüncü taraf lisans bildirimi tamamlandı
 - [ ] `platform-tools`'u `Downloads`'tan kalıcı bir yere taşı

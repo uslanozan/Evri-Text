@@ -102,6 +102,21 @@ Run unit tests with:
 For optional tests that call the real Gemini API, copy `.env.example` to `.env` and
 add your own key. Never commit your API key.
 
+### Signed release
+
+Create your permanent release key outside the repository. Copy
+`keystore.properties.example` to `keystore.properties`, then enter the real file
+path, alias, and passwords. The real properties file and all `*.jks` keys are ignored
+by Git.
+
+```powershell
+.\gradlew.bat assembleRelease
+.\gradlew.bat bundleRelease
+```
+
+Back up the key and passwords securely. You will need the same signing identity to
+publish future updates to the application.
+
 ## Localization
 
 The app uses Android's resource system. `app/src/main/res/values/strings.xml` contains

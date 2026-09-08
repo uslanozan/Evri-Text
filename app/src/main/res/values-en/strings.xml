@@ -26,7 +26,8 @@
     <string name="youtube_detection_dialog_message">This feature disconnects between regular videos so Shorts and YouTube recommendations keep working. Android calls this “Notification access.” Evri Text does not read or store your notifications; it only observes the YouTube playback state.</string>
     <string name="action_open_settings">Open settings</string>
     <string name="notice_preparing">Preparing subtitles…</string>
-    <string name="notice_already_target">The video is already in Turkish — no subtitles needed</string>
+    <string name="notice_already_spoken">This video already has Turkish audio — no translation needed</string>
+    <string name="notice_already_subtitled">This video already has Turkish subtitles — enable them in YouTube</string>
     <string name="notice_no_captions">This video has no captions</string>
     <string name="notice_failed">Could not load subtitles</string>
     <string name="notice_network_failed">Could not connect — check your internet connection</string>

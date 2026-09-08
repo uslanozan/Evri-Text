@@ -38,7 +38,10 @@ class SubtitleEngine(
 ) {
 
     sealed interface Result {
-        /** A human already wrote subtitles in the target language: do nothing. */
+        /** The video's audio is already in the target language: do nothing. */
+        data class AlreadySpoken(val languageTag: String) : Result
+
+        /** A human already wrote subtitles in the target language: use those. */
         data class AlreadySubtitled(val languageTag: String) : Result
         data class NoCaptions(val videoId: String) : Result
         data class Ready(
@@ -66,15 +69,14 @@ class SubtitleEngine(
         val info = runCatching { captions.probe(videoId) }
             .getOrElse { return Result.Failed("caption probe failed: ${it.message}") }
 
-        info.manualIn(targetLang)?.let { return Result.AlreadySubtitled(it.languageTag) }
-
-        // YouTube only ever runs speech recognition in the language actually being
-        // spoken, so an automatic track in the target language means the video is in
-        // that language already. Standing down is the correct behaviour, not an
-        // optimisation: putting a machine paraphrase over speech the viewer already
-        // understands makes it worse, and pays for the privilege. It also means nobody
-        // has to remember to switch the app off before opening a Turkish video.
-        info.spokenIn(targetLang)?.let { return Result.AlreadySubtitled(it.languageTag) }
+        info.existingTargetIn(targetLang)?.let { existing ->
+            return when (existing.kind) {
+                CaptionSource.VideoCaptions.ExistingTargetKind.SPOKEN ->
+                    Result.AlreadySpoken(existing.track.languageTag)
+                CaptionSource.VideoCaptions.ExistingTargetKind.SUBTITLED ->
+                    Result.AlreadySubtitled(existing.track.languageTag)
+            }
+        }
 
         val track = info.best() ?: return Result.NoCaptions(videoId)
 

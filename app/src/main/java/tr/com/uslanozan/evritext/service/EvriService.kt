@@ -330,9 +330,14 @@ class EvriService : LifecycleService() {
                 }
             }
 
+            is SubtitleEngine.Result.AlreadySpoken -> {
+                Log.i(TAG, "$videoId audio already in ${result.languageTag} — standing down")
+                notice.show(getString(R.string.notice_already_spoken))
+            }
+
             is SubtitleEngine.Result.AlreadySubtitled -> {
-                Log.i(TAG, "$videoId already in ${result.languageTag} — standing down")
-                notice.show(getString(R.string.notice_already_target))
+                Log.i(TAG, "$videoId already has ${result.languageTag} subtitles — standing down")
+                notice.show(getString(R.string.notice_already_subtitled))
             }
 
             is SubtitleEngine.Result.NoCaptions -> {

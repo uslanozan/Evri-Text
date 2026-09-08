@@ -98,6 +98,20 @@ Birim testleri çalıştırmak için:
 Gerçek Gemini API'sini kullanan isteğe bağlı testler için `.env.example` dosyasını
 `.env` adıyla kopyalayıp kendi anahtarınızı girin. Anahtarınızı Git'e eklemeyin.
 
+### İmzalı release
+
+Kalıcı yayın anahtarınızı deponun dışında oluşturun. `keystore.properties.example`
+dosyasını `keystore.properties` adıyla kopyalayıp gerçek dosya yolunu, alias'ı ve
+parolaları girin. Bu dosya ve `*.jks` anahtarları Git tarafından yok sayılır.
+
+```powershell
+.\gradlew.bat assembleRelease
+.\gradlew.bat bundleRelease
+```
+
+Anahtar dosyasını ve parolaları güvenli bir yerde yedekleyin; aynı uygulamaya sonraki
+güncellemeleri imzalamak için tekrar gerekir.
+
 ## Yerelleştirme
 
 Android kaynak sistemi kullanılır. `app/src/main/res/values/strings.xml` varsayılan

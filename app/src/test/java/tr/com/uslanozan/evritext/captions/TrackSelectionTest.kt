@@ -53,6 +53,10 @@ class TrackSelectionTest {
         // leave it alone rather than translate Turkish into Turkish.
         val video = video(track("tr", auto = true))
         assertNotNull(video.spokenIn("tr"))
+        assertEquals(
+            CaptionSource.VideoCaptions.ExistingTargetKind.SPOKEN,
+            video.existingTargetIn("tr")?.kind,
+        )
     }
 
     @Test
@@ -64,6 +68,20 @@ class TrackSelectionTest {
         assertNull("a written track is not evidence of the spoken language", video.spokenIn("tr"))
         // It is still a reason to do nothing — a human already translated it.
         assertNotNull(video.manualIn("tr"))
+        assertEquals(
+            CaptionSource.VideoCaptions.ExistingTargetKind.SUBTITLED,
+            video.existingTargetIn("tr")?.kind,
+        )
+    }
+
+    @Test
+    fun `spoken Turkish wins when both Turkish track kinds exist`() {
+        val video = video(track("tr", auto = false), track("tr", auto = true))
+
+        assertEquals(
+            CaptionSource.VideoCaptions.ExistingTargetKind.SPOKEN,
+            video.existingTargetIn("tr")?.kind,
+        )
     }
 
     @Test
@@ -72,6 +90,7 @@ class TrackSelectionTest {
 
         assertNull(video.manualIn("tr"))
         assertNull(video.spokenIn("tr"))
+        assertNull(video.existingTargetIn("tr"))
         assertNotNull(video.best())
     }
 

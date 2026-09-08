@@ -1,8 +1,22 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.serialization)
 }
+
+val releaseKeystorePropertiesFile = rootProject.file("keystore.properties")
+val releaseKeystoreProperties = Properties().apply {
+    if (releaseKeystorePropertiesFile.isFile) {
+        releaseKeystorePropertiesFile.inputStream().use(::load)
+    }
+}
+
+fun releaseSigningProperty(name: String): String =
+    requireNotNull(releaseKeystoreProperties.getProperty(name)) {
+        "Missing '$name' in ${releaseKeystorePropertiesFile.name}"
+    }
 
 android {
     namespace = "tr.com.uslanozan.evritext"
@@ -17,8 +31,20 @@ android {
         versionName = "0.1.0"
     }
 
+    signingConfigs {
+        if (releaseKeystorePropertiesFile.isFile) {
+            create("release") {
+                storeFile = rootProject.file(releaseSigningProperty("storeFile"))
+                storePassword = releaseSigningProperty("storePassword")
+                keyAlias = releaseSigningProperty("keyAlias")
+                keyPassword = releaseSigningProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.findByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(

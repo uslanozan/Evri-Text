@@ -26,7 +26,8 @@
     <string name="youtube_detection_dialog_message">Bu özellik normal videolar arasında bağlantıyı keserek Shorts’un ve YouTube önerilerinin bozulmasını önler. Android bunu “Bildirim erişimi” olarak adlandırır; Evri Text bildirimlerinizi okumaz veya saklamaz, yalnızca YouTube’un oynatma durumunu görür.</string>
     <string name="action_open_settings">Ayarları aç</string>
     <string name="notice_preparing">Altyazı hazırlanıyor…</string>
-    <string name="notice_already_target">Video zaten Türkçe — altyazı gerekmiyor</string>
+    <string name="notice_already_spoken">Bu videonun sesi zaten Türkçe — çeviri gerekmiyor</string>
+    <string name="notice_already_subtitled">Bu videoda zaten Türkçe altyazı var — YouTube’dan açabilirsiniz</string>
     <string name="notice_no_captions">Bu videoda altyazı yok</string>
     <string name="notice_failed">Altyazı alınamadı</string>
     <string name="notice_network_failed">İnternet bağlantısı kurulamadı — bağlantıyı kontrol edin</string>
