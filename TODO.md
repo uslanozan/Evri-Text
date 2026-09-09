@@ -170,12 +170,12 @@ olmadan eski davranış korunuyor.
 
 ## Çeviri sağlayıcıları
 
-- [ ] `TranslationProvider` arayüzü var — yeni sağlayıcı eklemek için glue code
-- [ ] OpenAI sağlayıcısı
-- [ ] Anthropic sağlayıcısı
+- [x] `TranslationProvider` arayüzü ve UI üzerinden sağlayıcı seçimi
+- [x] Gemini, OpenAI, OpenRouter, Anthropic ve Groq sağlayıcıları
+- [x] Her sağlayıcı için ayrı şifreli API anahtarı ve tokensız anahtar doğrulaması
 - [ ] Sağlayıcı arası kalite karşılaştırması: aynı video, aynı prompt, yan yana
 - [ ] Maliyet takibi: video başına token ve kuruş
-- [ ] API key'i kullanıcının kendi hesabından alma akışı (uygulamaya gömülü key yok)
+- [x] API key'i kullanıcının kendi hesabından alma akışı (uygulamaya gömülü key yok)
 
 ---
 

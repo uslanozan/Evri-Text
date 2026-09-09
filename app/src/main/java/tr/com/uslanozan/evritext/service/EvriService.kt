@@ -28,7 +28,8 @@ import tr.com.uslanozan.evritext.settings.Settings
 import tr.com.uslanozan.evritext.subtitles.Cue
 import tr.com.uslanozan.evritext.subtitles.SubtitleEngine
 import tr.com.uslanozan.evritext.subtitles.Vtt
-import tr.com.uslanozan.evritext.translate.GeminiTranslationProvider
+import tr.com.uslanozan.evritext.translate.LlmProvider
+import tr.com.uslanozan.evritext.translate.translationProvider
 import tr.com.uslanozan.evritext.ui.MainActivity
 import java.io.File
 import java.util.Locale
@@ -218,18 +219,21 @@ class EvriService : LifecycleService() {
         sessionJobs += lifecycleScope.launch {
             var job: Job? = null
             var activeApiKey: String? = null
+            var activeProvider: LlmProvider? = null
             var engine: SubtitleEngine? = null
             while (currentCoroutineContext().isActive) {
                 val apiKey = settings.apiKey.value
-                if (apiKey != activeApiKey) {
+                val provider = settings.provider.value
+                if (apiKey != activeApiKey || provider != activeProvider) {
                     job?.cancel()
                     job = null
                     cues = emptyList()
                     builtVideoId = null
                     activeApiKey = apiKey
+                    activeProvider = provider
                     engine = apiKey?.let {
                         SubtitleEngine(
-                            provider = GeminiTranslationProvider(it),
+                            provider = provider.translationProvider(it),
                             cacheDir = File(cacheDir, "subs"),
                         )
                     }

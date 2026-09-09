@@ -39,7 +39,7 @@ class GeminiTranslationProvider(
         .build(),
 ) : TranslationProvider {
 
-    override val id = "gemini"
+    override val id = cacheId("gemini", model)
     override val displayName = "Google Gemini"
 
     override suspend fun translate(

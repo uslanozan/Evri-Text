@@ -13,11 +13,11 @@ playing in the official YouTube app on Android TV.
 
 Evri Text does not modify the video or replace YouTube with a separate player. It
 tracks the video playing in YouTube, translates an available caption track into
-Turkish with Gemini, and displays the result in sync through an on-screen overlay.
+Turkish with your selected LLM provider, and displays the result in sync through an on-screen overlay.
 
 > [!IMPORTANT]
 > This project is under active development. Evri Text is not developed, supported,
-> or endorsed by Google, YouTube, or Gemini.
+> or endorsed by Google, YouTube, or any supported LLM provider.
 
 ## Screenshots
 
@@ -45,14 +45,16 @@ Turkish with Gemini, and displays the result in sync through an on-screen overla
 - Lets you adjust subtitle size, color, background, and screen position with the TV
   remote.
 - Follows the TV system language; Turkish is the default and English is supported.
-- Stores the API key only on the device and in encrypted form.
+- Supports Gemini, OpenAI, OpenRouter, Anthropic, and Groq.
+- Stores each provider's API key separately, only on the device and in encrypted form.
 - Uses no proprietary server, user account, ads, or analytics.
 
 ## Requirements
 
 - Android TV or Google TV — Android 9 / API 28 or later
 - The official YouTube app
-- Your own [Gemini API key](https://aistudio.google.com/apikey)
+- Your own API key from one supported provider: Gemini, OpenAI, OpenRouter,
+  Anthropic, or Groq
 - Permission to display over other apps
 - Notification access if smart YouTube connection tracking is enabled
 
@@ -61,8 +63,8 @@ Turkish with Gemini, and displays the result in sync through an on-screen overla
 1. Install the Evri Text APK on your TV and open the app.
 2. In YouTube, go to **Settings → Link with TV code** and generate a code.
 3. Enter the code in the pairing field in Evri Text.
-4. Add your Gemini API key. You can use the Google TV mobile remote keyboard to
-   enter long keys more easily.
+4. Select your API key provider and add that provider's key. You can use the Google
+   TV mobile remote keyboard to enter long keys more easily.
 5. Grant permission to display over other apps.
 6. Optionally enable notification access for **Smart YouTube connection**.
 7. Turn on Evri Text subtitles and play a video in YouTube.
@@ -76,7 +78,7 @@ correctly when switching between apps.
 1. A YouTube Lounge session provides the current video ID and playback position.
 2. NewPipeExtractor discovers the video's available caption tracks.
 3. Captions are converted into readable sentences and translated into Turkish with
-   Gemini.
+   the selected provider.
 4. Translated sentences are displayed at the correct time in an Android overlay
    window.
 

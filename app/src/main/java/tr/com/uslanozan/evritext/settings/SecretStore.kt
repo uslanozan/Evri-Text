@@ -10,12 +10,20 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
-/** Small Android Keystore-backed store for the user's provider credential. */
-internal class SecretStore(private val prefs: SharedPreferences) {
+/** Small Android Keystore-backed store for one provider credential. */
+internal class SecretStore(
+    private val prefs: SharedPreferences,
+    namespace: String? = null,
+) {
+
+    // Gemini keeps the original names so existing installs retain their saved key.
+    private val ivPreference = namespace?.let { "${KEY_IV}_$it" } ?: KEY_IV
+    private val ciphertextPreference =
+        namespace?.let { "${KEY_CIPHERTEXT}_$it" } ?: KEY_CIPHERTEXT
 
     fun read(): String? = runCatching {
-        val ciphertext = prefs.getString(KEY_CIPHERTEXT, null) ?: return null
-        val iv = prefs.getString(KEY_IV, null) ?: return null
+        val ciphertext = prefs.getString(ciphertextPreference, null) ?: return null
+        val iv = prefs.getString(ivPreference, null) ?: return null
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(
             Cipher.DECRYPT_MODE,
@@ -33,16 +41,16 @@ internal class SecretStore(private val prefs: SharedPreferences) {
         cipher.init(Cipher.ENCRYPT_MODE, encryptionKey())
         val ciphertext = cipher.doFinal(value.toByteArray(Charsets.UTF_8))
         prefs.edit()
-            .putString(KEY_IV, Base64.encodeToString(cipher.iv, Base64.NO_WRAP))
-            .putString(KEY_CIPHERTEXT, Base64.encodeToString(ciphertext, Base64.NO_WRAP))
+            .putString(ivPreference, Base64.encodeToString(cipher.iv, Base64.NO_WRAP))
+            .putString(ciphertextPreference, Base64.encodeToString(ciphertext, Base64.NO_WRAP))
             .apply()
     }
 
     fun clear() {
-        prefs.edit().remove(KEY_IV).remove(KEY_CIPHERTEXT).apply()
+        prefs.edit().remove(ivPreference).remove(ciphertextPreference).apply()
     }
 
-    fun owns(key: String?): Boolean = key == KEY_IV || key == KEY_CIPHERTEXT
+    fun owns(key: String?): Boolean = key == ivPreference || key == ciphertextPreference
 
     private fun encryptionKey(): SecretKey {
         val keyStore = KeyStore.getInstance(KEYSTORE).apply { load(null) }

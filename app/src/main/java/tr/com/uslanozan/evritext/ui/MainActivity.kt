@@ -26,7 +26,7 @@ import tr.com.uslanozan.evritext.service.EvriService
 import tr.com.uslanozan.evritext.service.LoungeGateDecision
 import tr.com.uslanozan.evritext.service.YouTubeSessionListener
 import tr.com.uslanozan.evritext.service.loungeDecision
-import tr.com.uslanozan.evritext.settings.GeminiApiKeyValidator
+import tr.com.uslanozan.evritext.settings.ApiKeyValidator
 import tr.com.uslanozan.evritext.settings.Settings
 import tr.com.uslanozan.evritext.settings.SubtitleAppearance
 import tr.com.uslanozan.evritext.settings.SubtitleBackground
@@ -34,6 +34,7 @@ import tr.com.uslanozan.evritext.settings.SubtitleColor
 import tr.com.uslanozan.evritext.settings.SubtitlePosition
 import tr.com.uslanozan.evritext.settings.SubtitleSize
 import tr.com.uslanozan.evritext.settings.applySubtitleAppearance
+import tr.com.uslanozan.evritext.translate.LlmProvider
 
 /**
  * Settings and status screen.
@@ -47,7 +48,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var settings: Settings
     private lateinit var pairingStore: PairingStore
-    private val apiKeyValidator = GeminiApiKeyValidator()
+    private val apiKeyValidator = ApiKeyValidator()
     private var paired = false
     private var previewAppearance: SubtitleAppearance? = null
 
@@ -64,6 +65,8 @@ class MainActivity : AppCompatActivity() {
         binding.rowEnabled.root.setOnClickListener { settings.toggle() }
         binding.rowPairing.bind(R.string.setting_pairing, getString(R.string.setting_pairing_empty))
         binding.rowPairing.root.setOnClickListener { showPairingDialog() }
+        binding.rowProvider.bind(R.string.setting_provider, settings.provider.value.displayName)
+        binding.rowProvider.root.setOnClickListener { showProviderDialog() }
         binding.rowApiKey.bind(R.string.setting_api_key, getString(R.string.setting_api_key_empty))
         binding.rowApiKey.root.setOnClickListener { showApiKeyDialog() }
         binding.rowYouTubeDetection.bind(R.string.setting_youtube_detection, "")
@@ -113,6 +116,7 @@ class MainActivity : AppCompatActivity() {
             binding.rowApiKey.rowValue.setText(
                 if (hasApiKey) R.string.setting_api_key_set else R.string.setting_api_key_empty,
             )
+            binding.rowProvider.rowValue.text = settings.provider.value.displayName
             binding.rowPairing.rowValue.setText(
                 if (paired) R.string.setting_pairing_set else R.string.setting_pairing_empty,
             )
@@ -319,13 +323,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showApiKeyDialog() {
+        val provider = settings.provider.value
         val input = EditText(this).apply {
             setSingleLine()
             hint = getString(R.string.api_key_input_hint)
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
         }
         val builder = MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.api_key_dialog_title)
+            .setTitle(getString(R.string.api_key_dialog_title, provider.displayName))
             .setMessage(R.string.api_key_dialog_message)
             .setView(input)
             .setNegativeButton(android.R.string.cancel, null)
@@ -349,18 +354,18 @@ class MainActivity : AppCompatActivity() {
                     remove?.isEnabled = false
                     save.setText(R.string.api_key_validating)
                     lifecycleScope.launch {
-                        val result = apiKeyValidator.validate(value)
+                        val result = apiKeyValidator.validate(provider, value)
                         if (!dialog.isShowing) return@launch
                         when (result) {
-                            GeminiApiKeyValidator.Result.VALID -> {
+                            ApiKeyValidator.Result.VALID -> {
                                 settings.setApiKey(value)
                                 dialog.dismiss()
                             }
-                            GeminiApiKeyValidator.Result.INVALID -> {
+                            ApiKeyValidator.Result.INVALID -> {
                                 restoreApiKeyDialog(input, save, remove)
-                                input.error = getString(R.string.api_key_invalid)
+                                input.error = getString(R.string.api_key_invalid, provider.displayName)
                             }
-                            GeminiApiKeyValidator.Result.UNAVAILABLE -> {
+                            ApiKeyValidator.Result.UNAVAILABLE -> {
                                 restoreApiKeyDialog(input, save, remove)
                                 input.error = getString(R.string.api_key_validation_unavailable)
                             }
@@ -376,6 +381,23 @@ class MainActivity : AppCompatActivity() {
         dialog.setOnDismissListener { binding.rowApiKey.root.requestFocus() }
         dialog.show()
         input.requestFocus()
+    }
+
+    private fun showProviderDialog() {
+        val values = LlmProvider.entries
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.setting_provider)
+            .setSingleChoiceItems(
+                values.map { it.displayName }.toTypedArray(),
+                values.indexOf(settings.provider.value),
+            ) { openDialog, which ->
+                settings.setProvider(values[which])
+                openDialog.dismiss()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .create()
+        dialog.setOnDismissListener { binding.rowProvider.root.requestFocus() }
+        dialog.show()
     }
 
     private fun showYouTubeDetectionDialog() {

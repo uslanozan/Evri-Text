@@ -68,6 +68,10 @@
             layout="@layout/item_setting_row" />
 
         <include
+            android:id="@+id/rowProvider"
+            layout="@layout/item_setting_row" />
+
+        <include
             android:id="@+id/rowApiKey"
             layout="@layout/item_setting_row" />
 

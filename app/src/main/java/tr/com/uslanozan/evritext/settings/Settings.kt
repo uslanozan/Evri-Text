@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import tr.com.uslanozan.evritext.translate.LlmProvider
 import java.io.File
 
 /**
@@ -18,10 +19,13 @@ class Settings(context: Context) {
 
     private val prefs: SharedPreferences =
         appContext.getSharedPreferences(FILE, Context.MODE_PRIVATE)
-    private val secrets = SecretStore(prefs)
+    private val secrets = LlmProvider.entries.associateWith { provider ->
+        SecretStore(prefs, provider.takeUnless { it == LlmProvider.GEMINI }?.name?.lowercase())
+    }
 
     private val _enabled = MutableStateFlow(prefs.getBoolean(KEY_ENABLED, false))
-    private val _apiKey = MutableStateFlow(secrets.read() ?: readLegacyApiKey())
+    private val _provider = MutableStateFlow(readEnum(KEY_PROVIDER, LlmProvider.GEMINI))
+    private val _apiKey = MutableStateFlow(readApiKey(_provider.value))
     private val _subtitleColor = MutableStateFlow(readEnum(KEY_SUBTITLE_COLOR, SubtitleColor.WHITE))
     private val _subtitleSize = MutableStateFlow(readEnum(KEY_SUBTITLE_SIZE, SubtitleSize.MEDIUM))
     private val _subtitleBackground = MutableStateFlow(
@@ -40,6 +44,7 @@ class Settings(context: Context) {
      */
     val enabled: StateFlow<Boolean> = _enabled
 
+    val provider: StateFlow<LlmProvider> = _provider
     /** Never expose this value in the UI; consumers only use it to build a provider. */
     val apiKey: StateFlow<String?> = _apiKey
     val subtitleColor: StateFlow<SubtitleColor> = _subtitleColor
@@ -51,7 +56,11 @@ class Settings(context: Context) {
         SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
             when {
                 key == KEY_ENABLED -> _enabled.value = prefs.getBoolean(KEY_ENABLED, false)
-                secrets.owns(key) -> _apiKey.value = secrets.read() ?: readLegacyApiKey()
+                key == KEY_PROVIDER -> {
+                    _provider.value = readEnum(KEY_PROVIDER, LlmProvider.GEMINI)
+                    _apiKey.value = readApiKey(_provider.value)
+                }
+                secrets.values.any { it.owns(key) } -> _apiKey.value = readApiKey(_provider.value)
                 key == KEY_SUBTITLE_COLOR ->
                     _subtitleColor.value = readEnum(key, SubtitleColor.WHITE)
                 key == KEY_SUBTITLE_SIZE ->
@@ -78,19 +87,29 @@ class Settings(context: Context) {
         return next
     }
 
+    fun setProvider(value: LlmProvider) {
+        prefs.edit().putString(KEY_PROVIDER, value.name).apply()
+        _provider.value = value
+        _apiKey.value = readApiKey(value)
+    }
+
     fun setApiKey(value: String) {
         val clean = value.trim()
         require(clean.isNotEmpty()) { "API key cannot be blank" }
-        prefs.edit().putBoolean(KEY_IGNORE_LEGACY_API_KEY, true).apply()
-        secrets.write(clean)
+        if (_provider.value == LlmProvider.GEMINI) {
+            prefs.edit().putBoolean(KEY_IGNORE_LEGACY_API_KEY, true).apply()
+        }
+        secrets.getValue(_provider.value).write(clean)
         _apiKey.value = clean
     }
 
     fun clearApiKey() {
         // An older adb-pushed file may still exist. Once the user has managed the
         // key from the UI, it must not silently become active again.
-        prefs.edit().putBoolean(KEY_IGNORE_LEGACY_API_KEY, true).apply()
-        secrets.clear()
+        if (_provider.value == LlmProvider.GEMINI) {
+            prefs.edit().putBoolean(KEY_IGNORE_LEGACY_API_KEY, true).apply()
+        }
+        secrets.getValue(_provider.value).clear()
         _apiKey.value = null
     }
 
@@ -124,9 +143,14 @@ class Settings(context: Context) {
             ?.trim()
             ?.takeIf { it.isNotEmpty() }
 
+    private fun readApiKey(provider: LlmProvider): String? =
+        secrets.getValue(provider).read()
+            ?: if (provider == LlmProvider.GEMINI) readLegacyApiKey() else null
+
     private companion object {
         const val FILE = "evritext.settings"
         const val KEY_ENABLED = "subtitles_enabled"
+        const val KEY_PROVIDER = "translation_provider"
         const val KEY_IGNORE_LEGACY_API_KEY = "ignore_legacy_api_key"
         const val LEGACY_API_KEY_FILE = "gemini_api_key.txt"
         const val KEY_SUBTITLE_COLOR = "subtitle_color"

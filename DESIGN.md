@@ -217,12 +217,16 @@ Bizim üç adımımız:
 
 ## 5. Provider adapter'ları
 
-Sağlayıcı ve API key runtime'da değiştirilebilir. Phase 0'daki Python modülleri (`phase0/evri/`) bu arayüzleri birebir yansıtıyor — Kotlin portu doğrudan çeviri olacak.
+Sağlayıcı ve API key runtime'da değiştirilebilir. Uygulama Gemini, OpenAI,
+OpenRouter, Anthropic ve Groq arasında TV arayüzünden geçiş yapar. OpenAI,
+OpenRouter ve Groq ortak Chat Completions tel biçimini; Anthropic kendi Messages
+API'sini; Gemini ise GenerateContent API'sini kullanır.
 
 Dağıtım modeli **BYOK**'tur (kullanıcı kendi anahtarını getirir). Açık kaynak APK'ya
 ortak bir anahtar gömülmez. Anahtar TV arayüzünden girilir, değeri UI'da geri
-gösterilmez ve Android Keystore tarafından korunan AES-GCM şifreli veri olarak
-saklanır. Eski geliştirme kurulumlarındaki `gemini_api_key.txt` yalnız geriye
+gösterilmez ve her sağlayıcı için ayrı olarak Android Keystore tarafından korunan
+AES-GCM şifreli veri biçiminde saklanır. Eski geliştirme kurulumlarındaki
+`gemini_api_key.txt` yalnız geriye
 uyumluluk için okunur; kullanıcı anahtarı UI'dan yönettiği anda dosya fallback'i
 devre dışı kalır.
 
@@ -230,7 +234,7 @@ devre dışı kalır.
 data class Cue(val startMs: Long, val endMs: Long, val text: String)
 
 interface TranslationProvider {
-    val id: String                    // "gemini", "openai", "deepl"
+    val id: String                    // sağlayıcı + model; önbellek anahtarının parçası
     val displayName: String
 
     suspend fun translate(
@@ -255,7 +259,10 @@ interface SttProvider {
 }
 ```
 
-**Başlangıç:** `GeminiTranslationProvider` (Flash-Lite — ucuz, Türkçe kalitesi iyi) ve `GeminiSttProvider` (ses girdisi, tek istekte transkribe + çeviri; Opus/WebM'i doğrudan kabul ediyor).
+**Çeviri uygulamaları:** `GeminiTranslationProvider`, OpenAI uyumlu ortak istemci
+(OpenAI, OpenRouter, Groq) ve `AnthropicTranslationProvider`. Anahtar kaydedilmeden
+önce her servisin model listeleme / anahtar bilgisi endpoint'iyle, üretim tokenı
+harcamadan doğrulanır.
 
 ### Model seçimi — Phase 0'da ölçüldü
 

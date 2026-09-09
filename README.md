@@ -12,12 +12,12 @@ Android TV'deki resmî YouTube uygulamasında oynatılan videolara yapay zekâ d
 Türkçe altyazı ekleyen açık kaynak yardımcı uygulama.
 
 Evri Text videoyu değiştirmez veya ayrı bir oynatıcı kullanmaz. YouTube'da oynayan
-videoyu takip eder, erişilebilir altyazı parçasını Gemini ile Türkçeye çevirir ve
+videoyu takip eder, erişilebilir altyazı parçasını seçtiğiniz LLM sağlayıcısıyla Türkçeye çevirir ve
 sonucu videoyla eşzamanlı bir ekran katmanında gösterir.
 
 > [!IMPORTANT]
-> Proje aktif geliştirme aşamasındadır. Evri Text; Google, YouTube veya Gemini
-> tarafından geliştirilmiş, desteklenmiş ya da onaylanmış değildir.
+> Proje aktif geliştirme aşamasındadır. Evri Text; Google, YouTube veya desteklenen
+> LLM sağlayıcıları tarafından geliştirilmiş, desteklenmiş ya da onaylanmış değildir.
 
 ## Ekran görüntüleri
 
@@ -43,14 +43,16 @@ sonucu videoyla eşzamanlı bir ekran katmanında gösterir.
 - Video değiştirme, sarma, duraklatma, reklam, Shorts ve video sonu durumlarını izler.
 - Altyazı boyutu, rengi, arka planı ve ekran konumu TV kumandasıyla ayarlanabilir.
 - Arayüz TV'nin sistem dilini izler; Türkçe varsayılandır, İngilizce desteklenir.
-- API anahtarını yalnızca cihazda, şifreli biçimde saklar.
+- Gemini, OpenAI, OpenRouter, Anthropic ve Groq sağlayıcılarını destekler.
+- Her sağlayıcının API anahtarını yalnızca cihazda ve ayrı ayrı şifreli biçimde saklar.
 - Kendine ait sunucu, kullanıcı hesabı, reklam veya analiz sistemi kullanmaz.
 
 ## Gereksinimler
 
 - Android TV veya Google TV — Android 9 / API 28 ve üzeri
 - Resmî YouTube uygulaması
-- Kullanıcının kendi [Gemini API anahtarı](https://aistudio.google.com/apikey)
+- Desteklenen sağlayıcılardan birine ait kullanıcı API anahtarı: Gemini, OpenAI,
+  OpenRouter, Anthropic veya Groq
 - Ekran üzerinde gösterim izni
 - Akıllı bağlantı takibi isteniyorsa bildirim erişimi
 
@@ -59,8 +61,8 @@ sonucu videoyla eşzamanlı bir ekran katmanında gösterir.
 1. Evri Text APK'sını TV'ye kurup uygulamayı açın.
 2. YouTube'da **Ayarlar → TV koduyla bağla** yolundan bir kod oluşturun.
 3. Kodu Evri Text'teki eşleştirme alanına girin.
-4. Gemini API anahtarınızı ekleyin. Uzun anahtarları girmek için Google TV mobil
-   kumandasının klavyesini kullanabilirsiniz.
+4. API anahtarı sağlayıcınızı seçip o sağlayıcıdaki anahtarınızı ekleyin. Uzun
+   anahtarları girmek için Google TV mobil kumandasının klavyesini kullanabilirsiniz.
 5. Ekran üzerinde gösterim iznini verin.
 6. İsterseniz **Akıllı YouTube bağlantısı** için bildirim erişimini etkinleştirin.
 7. Evri Text altyazısını açın ve YouTube'da bir video oynatın.
@@ -73,7 +75,7 @@ bağlantıyı doğru yönetmek için kullanır.
 
 1. YouTube Lounge oturumu oynatılan videonun kimliğini ve konumunu sağlar.
 2. NewPipeExtractor videonun erişilebilir altyazı parçalarını bulur.
-3. Altyazılar okunabilir cümlelere dönüştürülür ve Gemini ile Türkçeye çevrilir.
+3. Altyazılar okunabilir cümlelere dönüştürülür ve seçilen sağlayıcıyla Türkçeye çevrilir.
 4. Çevrilen cümleler Android overlay penceresinde doğru zamanda gösterilir.
 
 Ayrıntılı teknik kararlar [DESIGN.md](DESIGN.md), planlanan işler ise
