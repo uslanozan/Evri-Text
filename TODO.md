@@ -230,9 +230,11 @@ olmadan eski davranış korunuyor.
 - [x] VTT parse + cümle birleştirme portu — Python'la **birebir aynı** (1305 cue, 826 cümle), parity testi sabitliyor
 - [x] Çeviri portu — Phase 0'ın beş prompt dersi taşındı
 - [x] **Kademeli çeviri** — izlenen pozisyonun chunk'ı önce; ilk altyazı 89 sn → **8,5 sn**
+- [x] **Hedef dil yeniden segmentasyonu** — tam cümle çevirisini semantik sınırlardan
+  daha akıcı gösterim cue'larına böl; kaynak zamanlarına yaslan ve güvenli fallback kullan
 - [x] Cihaz üstü önbellek — `videoId + dil + provider + promptSürümü`
 - [x] Aç/kapa anahtarı — varsayılan kapalı; kapalıyken bağlantı da kesiliyor
 - [x] Hedef dil tespiti — otomatik Türkçe altyazı varsa video zaten Türkçe, uygulama duruyor
 - [x] Durum bildirimleri — hazırlanıyor / zaten Türkçe / altyazı yok / alınamadı
-- [x] 62 birim testi — tracker, VTT, cümle birleştirme, bozuk model cevapları, auth dosyası
+- [x] Birim testleri — tracker, VTT, cümle/ hedef cue segmentasyonu, bozuk model cevapları ve auth
 - [x] `DESIGN.md` Phase 0 ve Phase 1 bulgularıyla güncellendi

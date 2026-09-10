@@ -41,6 +41,8 @@ Turkish with your selected LLM provider, and displays the result in sync through
   captions from languages including English, French, and Arabic into Turkish.
 - Prioritizes the currently watched section and displays completed chunks without
   waiting for the whole video.
+- Preserves full-sentence translation while splitting long results into readable,
+  consecutive Turkish cues.
 - Handles video changes, seeking, pausing, ads, Shorts, and end-of-video states.
 - Lets you adjust subtitle size, color, background, and screen position with the TV
   remote.

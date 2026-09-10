@@ -40,6 +40,7 @@ sonucu videoyla eşzamanlı bir ekran katmanında gösterir.
 - Kaynak dili otomatik algılar; İngilizce, Fransızca ve Arapça dahil, erişilebilir
   YouTube altyazısı bulunan farklı dillerden Türkçeye çevirebilir.
 - İzlenen bölümü önceliklendirir ve tamamlanan parçaları bekletmeden gösterir.
+- Tam cümle çevirisini korurken uzun sonuçları okunabilir, ardışık Türkçe cue'lara böler.
 - Video değiştirme, sarma, duraklatma, reklam, Shorts ve video sonu durumlarını izler.
 - Altyazı boyutu, rengi, arka planı ve ekran konumu TV kumandasıyla ayarlanabilir.
 - Arayüz TV'nin sistem dilini izler; Türkçe varsayılandır, İngilizce desteklenir.

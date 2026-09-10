@@ -82,6 +82,22 @@ android {
             isReturnDefaultValues = true
 
             all {
+                // Full-film cue preview is intentionally opt-in because it calls a
+                // real translation API. Run with -PsegmentationPreview=true.
+                it.systemProperty(
+                    "evritext.segmentationPreview",
+                    providers.gradleProperty("segmentationPreview").orNull ?: "false",
+                )
+                // Generates Turkish SRT files from a local Tears of Steel copy for
+                // side-by-side playback in VLC. Also uses the real Gemini API.
+                it.systemProperty(
+                    "evritext.vlcPreview",
+                    providers.gradleProperty("vlcPreview").orNull ?: "false",
+                )
+                it.systemProperty(
+                    "evritext.vlcMovie",
+                    providers.gradleProperty("vlcMovie").orNull ?: "tears-of-steel",
+                )
                 // These tests print real translations and track listings; the output
                 // is the point, not just the pass/fail.
                 it.testLogging {

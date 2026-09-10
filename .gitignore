@@ -23,5 +23,8 @@ keystore.properties
 # removed after the Android port; this keeps old measurements and pairing data private.
 /phase0/
 
+# Large local media used for manual VLC subtitle previews.
+/test-media/
+
 # Original room photo used to prepare the public, perspective-corrected screenshot.
 /docs/screenshots/tv-photo-original.jpeg

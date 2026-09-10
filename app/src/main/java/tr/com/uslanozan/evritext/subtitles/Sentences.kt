@@ -15,6 +15,8 @@ data class Sentence(
     val endMs: Long,
     val text: String,
     val cueCount: Int,
+    /** Original ASR timing anchors, retained for target-language resegmentation. */
+    val sourceCues: List<Cue> = emptyList(),
 )
 
 object Sentences {
@@ -51,6 +53,7 @@ object Sentences {
                         endMs = buffer.last().endMs,
                         text = text,
                         cueCount = buffer.size,
+                        sourceCues = buffer.toList(),
                     ),
                 )
             }
@@ -77,16 +80,16 @@ object Sentences {
     /**
      * Pairs translated text back onto the source sentences' time ranges.
      *
-     * We deliberately do NOT redistribute a translation across the original fragment
-     * cues: Turkish word order differs from English, so any such split would put words
-     * under the wrong timestamps.
+     * Translation still happens over the complete sentence. Only after that do we
+     * split obviously long target text at semantic boundaries, snapping each split to
+     * an original ASR timing anchor. Unsafe cases retain the original single cue.
      */
     fun toCues(sentences: List<Sentence>, translations: List<String>): List<Cue> {
         require(sentences.size == translations.size) {
             "sentence/translation count mismatch: ${sentences.size} vs ${translations.size}"
         }
-        return sentences.zip(translations)
-            .map { (sentence, text) -> Cue(sentence.startMs, sentence.endMs, text.trim()) }
-            .filter { it.text.isNotEmpty() }
+        return sentences.zip(translations).flatMap { (sentence, text) ->
+            TargetCueSegmenter.segment(sentence, text)
+        }
     }
 }

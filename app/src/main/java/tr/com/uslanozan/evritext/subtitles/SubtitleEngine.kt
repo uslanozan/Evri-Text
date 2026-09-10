@@ -151,20 +151,20 @@ class SubtitleEngine(
 
     /** Only the sentences translated so far, in order — the rest simply are not shown. */
     private fun collect(sentences: List<Sentence>, translated: Array<String?>): List<Cue> =
-        sentences.indices.mapNotNull { index ->
+        sentences.indices.flatMap { index ->
             translated[index]?.takeIf { it.isNotBlank() }?.let {
-                Cue(sentences[index].startMs, sentences[index].endMs, it.trim())
-            }
+                TargetCueSegmenter.segment(sentences[index], it)
+            }.orEmpty()
         }
 
     // ------------------------------------------------------------------ cache
 
     /**
-     * Key is `videoId + lang + provider + promptVersion`, the same scheme Phase 0 used
-     * (DESIGN.md section 6): changing the prompt must not serve old translations.
+     * Translation and segmentation versions are both part of the key: changing either
+     * must not serve old, differently rendered subtitles.
      */
     private fun cacheFile(videoId: String) =
-        File(cacheDir, "$videoId.$targetLang.${provider.id}.$PROMPT_VERSION.json")
+        File(cacheDir, "$videoId.$targetLang.${provider.id}.$PROMPT_VERSION.$SEGMENTATION_VERSION.json")
 
     private fun cachedCues(videoId: String): List<Cue>? {
         val file = cacheFile(videoId)
@@ -189,6 +189,7 @@ class SubtitleEngine(
 
     companion object {
         private const val TAG = "SubtitleEngine"
+        private const val SEGMENTATION_VERSION = "seg2"
         private val JSON = Json { ignoreUnknownKeys = true }
         private val CACHE_SERIALIZER =
             kotlinx.serialization.builtins.ListSerializer(CachedCue.serializer())

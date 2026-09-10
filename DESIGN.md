@@ -207,11 +207,18 @@ Bizim üç adımımız:
 
 1. **Parçaları cümleye birleştir** → `"So the thing about this engine is that it doesn't really care about how much power you feed it."`
 2. **LLM'e bağlamla ver** — video başlığı, komşu cümleler, ve *"bu ASR çıktısı, duyma hatalarını bağlamdan düzelt"* talimatı
-3. **Sonucu birleştirilen parçaların zaman aralığına tek cue olarak yaz** → `00:01:12.340 --> 00:01:18.900`
+3. **Tam cümleyi çevirdikten sonra hedef dilde yeniden böl** → Türkçe sonuç birden
+   fazla cümle/cümlecik içeriyorsa yaklaşık iki satırlık gösterim cue'larına ayır.
+   Önce YouTube'un kaynak cue zamanlarına yaslan; yakın sınır yoksa süreyi metin
+   uzunluğuna göre deterministik paylaş.
 
 Çıktı: **"Bu motorun olayı şu: ona ne kadar güç verdiğin pek fark etmiyor."**
 
-Çeviriyi tekrar orijinal parçalara bölmeye **çalışmıyoruz** — Türkçe kelime sırası farklı olduğu için o zaten yanlış olur. Cümle bazında cue, TV'de okunabilirlik için de doğrusu (1–6 saniye, tam cümle).
+Kaynak kelimeleri hedef kelimelere birebir dağıtmıyoruz — Türkçe kelime sırası farklı
+olduğu için bu yanlış olur. Bunun yerine çeviri tamamlandıktan sonra yalnız semantik
+sınırlardan bölüyoruz. Her parça yaklaşık 42 karakter × 2 satır, en az 850 ms ve
+Türkçe yetişkin içerikleri için en fazla 17 karakter/sn koşullarını sağlamalıdır.
+Koşullar sağlanmıyorsa eski tek-cue davranışı güvenli fallback olarak kalır.
 
 ---
 

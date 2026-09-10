@@ -36,7 +36,9 @@ class GeminiTranslationProviderTest {
             context = TranslationContext(videoTitle = "Big Stan"),
         )
 
-        Sentences.toCues(sentences, translations).take(8).forEach {
+        val displayCues = Sentences.toCues(sentences, translations)
+        println("${sentences.size} translated sentences -> ${displayCues.size} display cues")
+        displayCues.take(12).forEach {
             println("[${Vtt.formatTimestamp(it.startMs)}] ${it.text}")
         }
 
