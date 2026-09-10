@@ -34,6 +34,13 @@ sonucu videoyla eşzamanlı bir ekran katmanında gösterir.
 
 <p align="center"><sub>İngilizce bir <a href="https://www.youtube.com/watch?v=7ZhdXgRfxHI">BBC Earth videosunda</a> Evri Text tarafından oluşturulan Türkçe altyazı</sub></p>
 
+<p align="center">
+  <img src="docs/screenshots/french-to-turkish.png" width="49%" alt="Fransızca bir TEDx videosu üzerinde Evri Text Türkçe altyazısı">
+  <img src="docs/screenshots/italian-to-turkish.png" width="49%" alt="İtalyanca bir TEDx videosu üzerinde Evri Text Türkçe altyazısı">
+</p>
+
+<p align="center"><sub>Fransızca ve İtalyanca test çıktıları. Temiz 1080p video karelerine Evri Text'in gerçek varsayılan overlay ölçüleri uygulanmıştır.</sub></p>
+
 ## Neler sunuyor?
 
 - Resmî YouTube for Android TV uygulamasıyla birlikte çalışır.
