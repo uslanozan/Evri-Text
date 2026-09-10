@@ -52,14 +52,14 @@ class TargetCueSegmenterTest {
     }
 
     @Test
-    fun `falls back when split events would be too fast to read`() {
-        val sentence = sourceSentence(cue(0.0, 2.0, "very fast source"))
+    fun `falls back when there is not enough minimum display time`() {
+        val sentence = sourceSentence(cue(0.0, 1.5, "very fast source"))
         val translation =
             "Bu, okunması oldukça uzun olan ilk cümledir. " +
                 "Bu da aynı iki saniyeye sıkışacak oldukça uzun ikinci cümledir."
 
         assertEquals(
-            listOf(Cue(0, 2_000, translation)),
+            listOf(Cue(0, 1_500, translation)),
             TargetCueSegmenter.segment(sentence, translation),
         )
     }
@@ -74,6 +74,58 @@ class TargetCueSegmenterTest {
         val result = TargetCueSegmenter.segment(sentence, "- Merhaba.\n- Nasılsın?")
 
         assertEquals(listOf("- Merhaba.", "- Nasılsın?"), result.map(Cue::text))
+    }
+
+    @Test
+    fun `normalizes YouTube speaker markers into separate subtitle turns`() {
+        val sentence = sourceSentence(cue(0.0, 4.1, "two speakers in one ASR cue"))
+
+        val result = TargetCueSegmenter.segment(
+            sentence,
+            ">> Vay anasını! >> Kesik neredeyse görünmüyor bile.",
+        )
+
+        assertEquals(
+            listOf("- Vay anasını!", "- Kesik neredeyse görünmüyor bile."),
+            result.map(Cue::text),
+        )
+        assertTrue(result.none { ">>" in it.text })
+    }
+
+    @Test
+    fun `streams the dense YouTube car-cutting speaker cue`() {
+        val sentence = sourceSentence(cue(0.0, 4.07, "dense two-speaker ASR cue"))
+
+        val result = TargetCueSegmenter.segment(
+            sentence,
+            ">> Vay anasını! >> Kesik neredeyse görünmüyor bile. " +
+                "Birinin arabasını ikiye bölsen fark etmezler bile,",
+        )
+
+        assertTrue("speaker cue was left as one text wall", result.size > 1)
+        assertEquals("- Vay anasını!", result.first().text)
+        assertTrue(result.drop(1).none { it.text.startsWith("- Vay") })
+        assertTrue(result.none { ">>" in it.text })
+    }
+
+    @Test
+    fun `streams a dense multi-speaker block instead of restoring one text wall`() {
+        val sentence = sourceSentence(cue(0.0, 5.271, "dense source cue"))
+        val translation =
+            "- Şehirde park sorunu yaşamıyoruz.\n" +
+                "- Şehirde daha birkaç dakika olmuştuk ki bu arabayla ilgili internette " +
+                "bir sürü video çıktı bile. Lafı almışken"
+
+        val result = TargetCueSegmenter.segment(sentence, translation)
+
+        assertTrue("dense block was not streamed", result.size > 1)
+        assertEquals(sentence.startMs, result.first().startMs)
+        assertEquals(sentence.endMs, result.last().endMs)
+        assertTrue(result.all { it.durationMs >= 850 })
+        assertTrue(result.all { it.text.length <= 84 })
+        result.zipWithNext().forEach { (left, right) ->
+            assertEquals(left.endMs, right.startMs)
+        }
     }
 
     @Test

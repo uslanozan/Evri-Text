@@ -189,7 +189,7 @@ class SubtitleEngine(
 
     companion object {
         private const val TAG = "SubtitleEngine"
-        private const val SEGMENTATION_VERSION = "seg2"
+        private const val SEGMENTATION_VERSION = "seg3"
         private val JSON = Json { ignoreUnknownKeys = true }
         private val CACHE_SERIALIZER =
             kotlinx.serialization.builtins.ListSerializer(CachedCue.serializer())

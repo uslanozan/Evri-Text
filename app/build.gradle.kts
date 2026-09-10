@@ -98,6 +98,14 @@ android {
                     "evritext.vlcMovie",
                     providers.gradleProperty("vlcMovie").orNull ?: "tears-of-steel",
                 )
+                it.systemProperty(
+                    "evritext.vlcVideoId",
+                    providers.gradleProperty("vlcVideoId").orNull ?: "",
+                )
+                it.systemProperty(
+                    "evritext.vlcReplay",
+                    providers.gradleProperty("vlcReplay").orNull ?: "false",
+                )
                 // These tests print real translations and track listings; the output
                 // is the point, not just the pass/fail.
                 it.testLogging {

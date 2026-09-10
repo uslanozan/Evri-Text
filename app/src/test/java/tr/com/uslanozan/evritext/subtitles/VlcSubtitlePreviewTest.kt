@@ -24,19 +24,7 @@ class VlcSubtitlePreviewTest {
         assumeTrue("no GEMINI_API_KEY or root .env — skipping", apiKey != null)
 
         val mediaDir = File(root, "test-media")
-        val spec = when (System.getProperty("evritext.vlcMovie")) {
-            "sintel" -> PreviewSpec("Sintel", "sintel", sourceFile = "sintel.en.srt")
-            "youtube-sample" -> PreviewSpec(
-                title = "YouTube WO6aRHKe7_c",
-                outputPrefix = "youtube-WO6aRHKe7_c",
-                videoId = "WO6aRHKe7_c",
-            )
-            else -> PreviewSpec(
-                "Tears of Steel",
-                "tears-of-steel",
-                sourceFile = "tears-of-steel.en.srt",
-            )
-        }
+        val spec = previewSpec()
         val source = if (spec.videoId != null) {
             val captionSource = CaptionSource()
             val info = captionSource.probe(spec.videoId)
@@ -91,6 +79,31 @@ class VlcSubtitlePreviewTest {
         assertTrue("generated preview subtitle is empty", newCues.isNotEmpty())
     }
 
+    @Test
+    fun `resegments saved VLC translations without another API call`() {
+        assumeTrue(
+            "manual VLC replay — run with -PvlcReplay=true",
+            System.getProperty("evritext.vlcReplay") == "true",
+        )
+        val mediaDir = File(findProjectRoot(), "test-media")
+        val spec = previewSpec()
+        val oldFile = File(mediaDir, "${spec.outputPrefix}.old.tr.srt")
+        require(oldFile.isFile) { "Missing ${oldFile.absolutePath}" }
+
+        val oldCues = Vtt.parse(oldFile.readText(Charsets.UTF_8))
+        val newCues = oldCues.flatMap { cue ->
+            TargetCueSegmenter.segment(
+                Sentence(cue.startMs, cue.endMs, cue.text, 1, listOf(cue)),
+                cue.text,
+            )
+        }
+        val newFile = File(mediaDir, "${spec.outputPrefix}.new.tr.srt")
+        newFile.writeText(toSrt(newCues), Charsets.UTF_8)
+
+        println("Replay created ${newFile.absolutePath} (${oldCues.size} -> ${newCues.size} cues)")
+        assertTrue("replayed preview subtitle is empty", newCues.isNotEmpty())
+    }
+
     private fun toSrt(cues: List<Cue>): String = buildString {
         cues.forEachIndexed { index, cue ->
             appendLine(index + 1)
@@ -121,6 +134,36 @@ class VlcSubtitlePreviewTest {
         return File(root, ".env").takeIf(File::isFile)?.readLines()
             ?.firstOrNull { it.startsWith("GEMINI_API_KEY=") }
             ?.substringAfter('=')?.trim()?.takeIf(String::isNotEmpty)
+    }
+
+    private fun previewSpec(): PreviewSpec {
+        val customVideoId = System.getProperty("evritext.vlcVideoId")
+            .orEmpty()
+            .trim()
+            .takeIf(String::isNotEmpty)
+        if (customVideoId != null) {
+            require(customVideoId.matches(Regex("[A-Za-z0-9_-]{11}"))) {
+                "Invalid YouTube video id: $customVideoId"
+            }
+            return PreviewSpec(
+                title = "YouTube $customVideoId",
+                outputPrefix = "youtube-$customVideoId",
+                videoId = customVideoId,
+            )
+        }
+        return when (System.getProperty("evritext.vlcMovie")) {
+        "sintel" -> PreviewSpec("Sintel", "sintel", sourceFile = "sintel.en.srt")
+        "youtube-sample" -> PreviewSpec(
+            title = "YouTube WO6aRHKe7_c",
+            outputPrefix = "youtube-WO6aRHKe7_c",
+            videoId = "WO6aRHKe7_c",
+        )
+        else -> PreviewSpec(
+            "Tears of Steel",
+            "tears-of-steel",
+            sourceFile = "tears-of-steel.en.srt",
+        )
+        }
     }
 
     private companion object {
