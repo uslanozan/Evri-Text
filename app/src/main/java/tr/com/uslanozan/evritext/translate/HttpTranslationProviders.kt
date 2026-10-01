@@ -13,6 +13,7 @@ import kotlinx.serialization.json.addJsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
+import kotlinx.serialization.json.putJsonObject
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -87,6 +88,8 @@ internal class OpenAiCompatibleTranslationProvider private constructor(
     providerName: String,
     private val endpoint: String,
     private val extraHeaders: Map<String, String> = emptyMap(),
+    private val useStructuredJson: Boolean = false,
+    private val useLegacyMaxTokens: Boolean = false,
     maxAttempts: Int = 3,
     private val http: OkHttpClient = defaultHttpClient(),
 ) : JsonTranslationProvider(
@@ -108,7 +111,35 @@ internal class OpenAiCompatibleTranslationProvider private constructor(
                     put("content", payload)
                 }
             }
-            put("max_completion_tokens", 4096)
+            if (useLegacyMaxTokens) {
+                put("max_tokens", 4096)
+            } else {
+                put("max_completion_tokens", 4096)
+            }
+            if (useStructuredJson) {
+                putJsonObject("response_format") {
+                    put("type", "json_schema")
+                    putJsonObject("json_schema") {
+                        put("name", "subtitle_translations")
+                        put("strict", true)
+                        putJsonObject("schema") {
+                            put("type", "array")
+                            putJsonObject("items") {
+                                put("type", "object")
+                                putJsonObject("properties") {
+                                    putJsonObject("i") { put("type", "integer") }
+                                    putJsonObject("tr") { put("type", "string") }
+                                }
+                                putJsonArray("required") {
+                                    add("i")
+                                    add("tr")
+                                }
+                                put("additionalProperties", false)
+                            }
+                        }
+                    }
+                }
+            }
         }.toString()
         val request = Request.Builder()
             .url(endpoint)
@@ -151,6 +182,8 @@ internal class OpenAiCompatibleTranslationProvider private constructor(
             providerId = "openrouter",
             providerName = "OpenRouter",
             endpoint = "https://openrouter.ai/api/v1/chat/completions",
+            useStructuredJson = true,
+            useLegacyMaxTokens = true,
             extraHeaders = mapOf(
                 "HTTP-Referer" to "https://evritext.uslanozan.com.tr/",
                 "X-Title" to "Evri Text",
@@ -168,6 +201,7 @@ internal class OpenAiCompatibleTranslationProvider private constructor(
             providerId = "groq",
             providerName = "Groq",
             endpoint = "https://api.groq.com/openai/v1/chat/completions",
+            useLegacyMaxTokens = true,
             http = http,
         )
     }

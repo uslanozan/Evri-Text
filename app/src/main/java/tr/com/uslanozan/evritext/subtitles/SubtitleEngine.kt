@@ -34,7 +34,13 @@ class SubtitleEngine(
     private val targetLang: String = "tr",
     private val chunkSize: Int = 30,
     private val contextSize: Int = 3,
-    private val workers: Int = 3,
+    /**
+     * Keep live translation requests sequential. Multiple concurrent chunks look
+     * attractive on paper, but provider rate limits turn them into a burst of 429s;
+     * the retry backoff then leaves the overlay empty before several chunks land at
+     * once. One worker still stays ahead of playback while keeping the stream smooth.
+     */
+    private val workers: Int = 1,
 ) {
 
     sealed interface Result {

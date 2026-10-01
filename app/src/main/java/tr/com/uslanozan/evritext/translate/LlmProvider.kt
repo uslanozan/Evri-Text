@@ -7,7 +7,8 @@ enum class LlmProvider(
 ) {
     GEMINI("Gemini", GeminiTranslationProvider.DEFAULT_MODEL),
     OPENAI("OpenAI", "gpt-5-mini"),
-    OPENROUTER("OpenRouter", "openrouter/auto"),
+    // Free, structured-output-capable model; OpenRouter Auto may route to paid models.
+    OPENROUTER("OpenRouter", "qwen/qwen3.8-27b:free"),
     ANTHROPIC("Anthropic", "claude-haiku-4-5-20251001"),
     GROQ("Groq", "llama-3.3-70b-versatile"),
 }
