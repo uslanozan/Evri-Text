@@ -2,6 +2,7 @@ package tr.com.uslanozan.evritext.translate
 
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -54,6 +55,8 @@ internal abstract class JsonTranslationProvider(
                 }
                 Log.i(TAG, "$displayName attempt $attempt returned ${best.count { it != null }}/${sentences.size}")
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                if (e is NonRetryableProviderException) throw e
                 lastError = e.message
                 Log.w(TAG, "$displayName attempt $attempt/$maxAttempts failed: ${e.message?.take(160)}")
             }
@@ -61,16 +64,15 @@ internal abstract class JsonTranslationProvider(
         }
 
         val translated = best.count { it != null }
-        if (translated == 0) error("translation failed after $maxAttempts attempts: $lastError")
-        Log.w(TAG, "$displayName keeping partial chunk: $translated/${sentences.size}")
-        best.mapIndexed { index, value ->
-            (value ?: sentences[index]).replace(TURN_MARKER, "\n")
-        }
+        error("incomplete translation after $maxAttempts attempts: $translated/${sentences.size}; $lastError")
     }
 
-    protected abstract fun request(system: String, payload: String): String
+    protected abstract suspend fun request(system: String, payload: String): String
 
     private fun retryDelayMs(error: String?, attempt: Int): Long {
+        val retrySeconds = Regex("""retryDelay=['"]?(\d+(?:\.\d+)?)s""")
+            .find(error.orEmpty())?.groupValues?.get(1)?.toDoubleOrNull()
+        if (retrySeconds != null) return (retrySeconds * 1000).toLong().coerceIn(1_000L, 65_000L)
         if ("429" in error.orEmpty()) return 30_000L
         return min(2_000L * attempt, 10_000L)
     }
@@ -98,7 +100,7 @@ internal class OpenAiCompatibleTranslationProvider private constructor(
     maxAttempts = maxAttempts,
 ) {
 
-    override fun request(system: String, payload: String): String {
+    override suspend fun request(system: String, payload: String): String {
         val body = buildJsonObject {
             put("model", model)
             putJsonArray("messages") {
@@ -148,9 +150,14 @@ internal class OpenAiCompatibleTranslationProvider private constructor(
             .post(body.toRequestBody(JSON_MEDIA_TYPE))
             .build()
 
-        http.newCall(request).execute().use { response ->
+        http.await(request).use { response ->
             val text = response.body?.string().orEmpty()
-            if (!response.isSuccessful) error("HTTP ${response.code}: ${text.take(400)}")
+            if (!response.isSuccessful) {
+                if (response.code == 401 || response.code == 403) {
+                    throw NonRetryableProviderException("HTTP ${response.code}: API key rejected")
+                }
+                error("HTTP ${response.code}: ${text.take(400)}")
+            }
             val root = Json.parseToJsonElement(text) as? JsonObject ?: error("not an object")
             val message = ((root["choices"] as? JsonArray)?.firstOrNull() as? JsonObject)
                 ?.get("message") as? JsonObject ?: error("no message")
@@ -163,12 +170,14 @@ internal class OpenAiCompatibleTranslationProvider private constructor(
             apiKey: String,
             model: String,
             http: OkHttpClient = defaultHttpClient(),
+            maxAttempts: Int = 3,
         ) = OpenAiCompatibleTranslationProvider(
             apiKey = apiKey,
             model = model,
             providerId = "openai",
             providerName = "OpenAI",
             endpoint = "https://api.openai.com/v1/chat/completions",
+            maxAttempts = maxAttempts,
             http = http,
         )
 
@@ -219,7 +228,7 @@ internal class AnthropicTranslationProvider(
     maxAttempts = maxAttempts,
 ) {
 
-    override fun request(system: String, payload: String): String {
+    override suspend fun request(system: String, payload: String): String {
         val body = buildJsonObject {
             put("model", model)
             put("max_tokens", 4096)
@@ -239,9 +248,14 @@ internal class AnthropicTranslationProvider(
             .post(body.toRequestBody(JSON_MEDIA_TYPE))
             .build()
 
-        http.newCall(request).execute().use { response ->
+        http.await(request).use { response ->
             val text = response.body?.string().orEmpty()
-            if (!response.isSuccessful) error("HTTP ${response.code}: ${text.take(400)}")
+            if (!response.isSuccessful) {
+                if (response.code == 401 || response.code == 403) {
+                    throw NonRetryableProviderException("HTTP ${response.code}: API key rejected")
+                }
+                error("HTTP ${response.code}: ${text.take(400)}")
+            }
             val root = Json.parseToJsonElement(text) as? JsonObject ?: error("not an object")
             val content = root["content"] as? JsonArray ?: error("no content")
             return content.mapNotNull { block ->

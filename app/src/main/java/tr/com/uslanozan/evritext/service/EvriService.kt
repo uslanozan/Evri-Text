@@ -11,6 +11,7 @@ import android.os.SystemClock
 import android.util.Log
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.currentCoroutineContext
@@ -221,6 +222,44 @@ class EvriService : LifecycleService() {
             var activeApiKey: String? = null
             var activeProvider: LlmProvider? = null
             var engine: SubtitleEngine? = null
+            var buildComplete = false
+            var retryAttempt = 0
+            var retryAtMs = 0L
+
+            fun launchBuild(activeEngine: SubtitleEngine, videoId: String) {
+                job = launch {
+                    val outcome = try {
+                        buildFor(activeEngine, session, videoId)
+                    } catch (error: CancellationException) {
+                        throw error
+                    } catch (error: Exception) {
+                        Log.e(TAG, "$videoId build crashed: ${error.message}", error)
+                        if (builtVideoId == videoId && settings.enabled.value) {
+                            cues = emptyList()
+                            notice.show(failureMessage(error.message ?: ""), 5_000)
+                        }
+                        BuildOutcome(
+                            complete = false,
+                            retryable = true,
+                            reason = error.message,
+                        )
+                    }
+                    if (builtVideoId == videoId && settings.enabled.value) {
+                        buildComplete = outcome.complete || !outcome.retryable
+                        if (buildComplete) {
+                            retryAttempt = 0
+                            retryAtMs = 0L
+                        } else {
+                            retryAttempt += 1
+                            retryAtMs = SystemClock.elapsedRealtime() + retryDelayMs(
+                                retryAttempt,
+                                outcome.reason,
+                            )
+                        }
+                    }
+                }
+            }
+
             while (currentCoroutineContext().isActive) {
                 val apiKey = settings.apiKey.value
                 val provider = settings.provider.value
@@ -229,6 +268,9 @@ class EvriService : LifecycleService() {
                     job = null
                     cues = emptyList()
                     builtVideoId = null
+                    buildComplete = false
+                    retryAttempt = 0
+                    retryAtMs = 0L
                     activeApiKey = apiKey
                     activeProvider = provider
                     engine = apiKey?.let {
@@ -245,12 +287,13 @@ class EvriService : LifecycleService() {
                     )
                 }
                 if (!settings.enabled.value) {
-                    // Switching off cancels an in-flight build but keeps whatever is
-                    // already translated. Discarding it would mean paying for the same
-                    // sentences again on the next toggle — and a half-finished build is
-                    // never written to the disk cache, so nothing else would save us.
                     job?.cancel()
                     job = null
+                    // Completed chunks are persisted by SubtitleEngine. Enabling again
+                    // resumes that progress and only requests untranslated chunks.
+                    buildComplete = false
+                    retryAttempt = 0
+                    retryAtMs = 0L
                     delay(500)
                     continue
                 }
@@ -268,12 +311,18 @@ class EvriService : LifecycleService() {
                     job?.cancel()
                     builtVideoId = videoId
                     cues = emptyList()
+                    buildComplete = false
+                    retryAttempt = 0
+                    retryAtMs = 0L
                     notice.dismiss()
-                    job = launch { buildFor(activeEngine, session, videoId) }
-                } else if (videoId != null && job == null && cues.isEmpty()) {
-                    // Same video, but the previous build was cancelled before it
-                    // produced anything. Pick it back up.
-                    job = launch { buildFor(activeEngine, session, videoId) }
+                    launchBuild(activeEngine, videoId)
+                } else if (
+                    videoId != null && !buildComplete &&
+                    (job == null || job?.isCompleted == true) &&
+                    SystemClock.elapsedRealtime() >= retryAtMs
+                ) {
+                    // Resume persisted chunks, or retry after a bounded backoff.
+                    launchBuild(activeEngine, videoId)
                 }
                 delay(500)
             }
@@ -284,7 +333,7 @@ class EvriService : LifecycleService() {
         engine: SubtitleEngine,
         session: LoungeSession,
         videoId: String,
-    ) {
+    ): BuildOutcome {
         val startMs = ((session.tracker.predict()?.positionS ?: 0.0) * 1000).toLong()
         Log.i(TAG, "building subtitles for $videoId from ${startMs}ms")
         val started = System.currentTimeMillis()
@@ -306,7 +355,13 @@ class EvriService : LifecycleService() {
             }
         }
 
-        val result = engine.build(videoId, startMs) { partial ->
+        val result = engine.build(
+            videoId = videoId,
+            startPositionMs = startMs,
+            currentPositionMs = {
+                ((session.tracker.predict()?.positionS ?: startMs / 1000.0) * 1000).toLong()
+            },
+        ) { partial ->
             if (!isCurrentBuild()) return@build
             cues = partial
             if (firstCues && partial.isNotEmpty()) {
@@ -318,7 +373,7 @@ class EvriService : LifecycleService() {
         }
         preparing.cancel()
         currentCoroutineContext().ensureActive()
-        if (!isCurrentBuild()) return
+        if (!isCurrentBuild()) return BuildOutcome(complete = false, retryable = false)
 
         when (result) {
             is SubtitleEngine.Result.Ready -> {
@@ -330,36 +385,67 @@ class EvriService : LifecycleService() {
                         if (result.fromCache) "(cache)" else "(fresh)",
                 )
                 if (result.warning != null) {
-                    notice.show(getString(R.string.notice_translation_partial), 5_000)
+                    val message = if ("429" in result.warning || "resource_exhausted" in result.warning.lowercase()) {
+                        failureMessage(result.warning)
+                    } else {
+                        getString(R.string.notice_translation_partial)
+                    }
+                    notice.show(message, 5_000)
                 }
+                return BuildOutcome(
+                    complete = result.warning == null,
+                    retryable = result.retryable,
+                    reason = result.warning,
+                )
             }
 
             is SubtitleEngine.Result.AlreadySpoken -> {
                 Log.i(TAG, "$videoId audio already in ${result.languageTag} — standing down")
                 notice.show(getString(R.string.notice_already_spoken))
+                return BuildOutcome(complete = true, retryable = false)
             }
 
             is SubtitleEngine.Result.AlreadySubtitled -> {
                 Log.i(TAG, "$videoId already has ${result.languageTag} subtitles — standing down")
                 notice.show(getString(R.string.notice_already_subtitled))
+                return BuildOutcome(complete = true, retryable = false)
             }
 
             is SubtitleEngine.Result.NoCaptions -> {
                 Log.w(TAG, "$videoId has no usable captions (Phase 2 territory)")
                 notice.show(getString(R.string.notice_no_captions))
+                return BuildOutcome(complete = true, retryable = false)
             }
 
             is SubtitleEngine.Result.Failed -> {
                 Log.e(TAG, "$videoId failed: ${result.reason}")
                 cues = emptyList()
                 notice.show(failureMessage(result.reason), 5_000)
+                return BuildOutcome(
+                    complete = !result.retryable,
+                    retryable = result.retryable,
+                    reason = result.reason,
+                )
             }
         }
     }
 
+    private fun retryDelayMs(attempt: Int, reason: String?): Long {
+        if ("429" in reason.orEmpty()) return MAX_RETRY_DELAY_MS
+        val exponent = (attempt - 1).coerceIn(0, 4)
+        return minOf(5_000L * (1L shl exponent), MAX_RETRY_DELAY_MS)
+    }
+
+    private data class BuildOutcome(
+        val complete: Boolean,
+        val retryable: Boolean,
+        val reason: String? = null,
+    )
+
     private fun failureMessage(reason: String): String {
         val message = reason.lowercase(Locale.ROOT)
         val resource = when {
+            "caption" in message -> R.string.notice_caption_failed
             "429" in message || "resource_exhausted" in message -> R.string.notice_quota_failed
             "translation failed" in message && (
                 "401" in message || "403" in message || "api_key" in message ||
@@ -368,7 +454,6 @@ class EvriService : LifecycleService() {
             "timeout" in message || "unable to resolve" in message ||
                 "failed to connect" in message || "network" in message ->
                 R.string.notice_network_failed
-            "caption" in message -> R.string.notice_caption_failed
             else -> R.string.notice_failed
         }
         return getString(resource)
@@ -466,6 +551,7 @@ class EvriService : LifecycleService() {
 
         /** Long enough that a cache hit never shows the notice at all. */
         private const val PREPARING_NOTICE_AFTER_MS = 1_500L
+        private const val MAX_RETRY_DELAY_MS = 60_000L
 
         /**
          * The running session, for the settings screen to read.

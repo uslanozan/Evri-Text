@@ -27,8 +27,8 @@ android {
         // 28 costs nothing and covers older boxes; the target device reports 30.
         minSdk = 28
         targetSdk = 35
-        versionCode = 2
-        versionName = "0.2.0"
+        versionCode = 3
+        versionName = "0.2.1"
     }
 
     signingConfigs {

@@ -124,6 +124,41 @@ class TrackSelectionTest {
     }
 
     @Test
+    fun `uses original audio metadata instead of the first auto-dub track`() {
+        val video = video(
+            track("ar", auto = true),
+            track("en", auto = true),
+            track("fr", auto = true),
+        ).copy(spokenLanguageTag = "en-US")
+
+        assertEquals("en", video.best()!!.baseLanguage)
+        assertNull("a Turkish dub track is not evidence of Turkish speech", video.spokenIn("tr"))
+        assertNull(video.existingTargetIn("tr"))
+    }
+
+    @Test
+    fun `does not guess the spoken language from one track among several auto dubs`() {
+        val video = video(
+            track("ar", auto = true),
+            track("tr", auto = true),
+        )
+
+        assertNull(video.spokenIn("tr"))
+        assertNull(video.existingTargetIn("tr"))
+    }
+
+    @Test
+    fun `keeps the single automatic track fallback when audio metadata is absent`() {
+        val video = video(track("tr", auto = true))
+
+        assertNotNull(video.spokenIn("tr"))
+        assertEquals(
+            CaptionSource.VideoCaptions.ExistingTargetKind.SPOKEN,
+            video.existingTargetIn("tr")?.kind,
+        )
+    }
+
+    @Test
     fun `a video with no track at all`() {
         val video = video()
 

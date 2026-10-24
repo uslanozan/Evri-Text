@@ -2,6 +2,7 @@ package tr.com.uslanozan.evritext.translate
 
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -100,6 +101,8 @@ class GeminiTranslationProvider(
                 }
                 Log.i(TAG, "attempt $attempt returned ${best.count { it != null }}/${sentences.size}")
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                if (e is NonRetryableProviderException) throw e
                 lastError = e.message
                 Log.w(TAG, "attempt $attempt/$maxAttempts failed: ${e.message?.take(160)}")
             }
@@ -107,25 +110,35 @@ class GeminiTranslationProvider(
         }
 
         val translated = best.count { it != null }
-        if (translated == 0) error("translation failed after $maxAttempts attempts: $lastError")
-
-        // Partial success beats discarding thirty good lines over one bad index.
-        Log.w(TAG, "keeping partial chunk: $translated/${sentences.size}")
-        best.mapIndexed { index, value ->
-            (value ?: sentences[index]).replace(TURN_MARKER, "\n")
-        }
+        error("incomplete translation after $maxAttempts attempts: $translated/${sentences.size}; $lastError")
     }
 
-    private fun request(body: String): String {
+    private suspend fun request(body: String): String {
         val request = Request.Builder()
             .url("$ENDPOINT/$model:generateContent")
             // API keys in URLs can leak into proxy and access logs.
             .header("x-goog-api-key", apiKey)
             .post(body.toRequestBody("application/json".toMediaType()))
             .build()
-        http.newCall(request).execute().use { response ->
+        http.await(request).use { response ->
             val text = response.body?.string().orEmpty()
-            if (!response.isSuccessful) error("HTTP ${response.code}: ${text.take(400)}")
+            if (!response.isSuccessful) {
+                if (response.code == 401 || response.code == 403) {
+                    throw NonRetryableProviderException("HTTP ${response.code}: API key rejected")
+                }
+                if (response.code == 429) {
+                    val quota = parseGeminiQuotaDetails(text)
+                    if (quota.dailyLimitExceeded) {
+                        throw NonRetryableProviderException("HTTP 429: daily quota exhausted")
+                    }
+                    if (quota.retryDelayMs != null && quota.retryDelayMs > MAX_INLINE_RETRY_DELAY_MS) {
+                        throw NonRetryableProviderException("HTTP 429: quota retry delay exceeds safe retry window")
+                    }
+                    val retryHint = quota.retryDelayMs?.let { " retryDelay='${it / 1000.0}s'" }.orEmpty()
+                    error("HTTP 429:$retryHint ${text.take(300)}")
+                }
+                error("HTTP ${response.code}: ${text.take(400)}")
+            }
             val root = Json.parseToJsonElement(text) as? JsonObject ?: error("not an object")
             val candidates = root["candidates"] as? JsonArray ?: error("no candidates")
             val parts = (candidates.firstOrNull() as? JsonObject)
@@ -145,7 +158,7 @@ class GeminiTranslationProvider(
         val text = error.orEmpty()
         if ("RESOURCE_EXHAUSTED" in text || "429" in text) {
             // Quote style varies with who serialised the error on the way here.
-            val seconds = Regex("""retryDelay['"]?\s*:\s*['"]?(\d+)s""")
+            val seconds = Regex("""retryDelay['"]?\s*:\s*['"]?(\d+(?:\.\d+)?)s""")
                 .find(text)?.groupValues?.get(1)
                 ?: Regex("""[Rr]etry in ([\d.]+)s""").find(text)?.groupValues?.get(1)
             return min((seconds?.toDoubleOrNull()?.times(1000)?.toLong() ?: 30_000L) + 1_000L, 65_000L)
@@ -156,6 +169,7 @@ class GeminiTranslationProvider(
     companion object {
         private const val TAG = "GeminiTranslate"
         private const val ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models"
+        private const val MAX_INLINE_RETRY_DELAY_MS = 65_000L
 
         /**
          * Measured on a 30-sentence chunk: this 3.0 s, gemini-3.6-flash 15.2 s. Live
